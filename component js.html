@@ -1,0 +1,414 @@
+
+
+<!-- saved from url=(0062)http://www.uco.es/~in1rosaj/tools/jsUML2/ejemplos/classGS.html -->
+<!-- blueprint unreal -> http://www.michalorzelek.com/blog/wp-content/uploads/2014/07/ForestGenerator_CreateGrid.png -->
+<html>
+	<body bgcolor="#444444">	
+		<!-- https://www.base64-image.de/ -->
+		<!-- http://icon-icons.com/descargaimagen.php?id=50262&root=510/PNG/32/&file=ios7-gear_icon-icons.com_50262.png -->
+		<img id="img_engrenagem" width="20" style="display: none" height="20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAalJREFUWIXt1r9OVEEUBvAfmmB8AAwJsVADUqkkJFKpJBbSUJBoZyiIGlsihRoBY+K/t9CCN7CxkTcggUCBBBcSCmy0MyYKFndXxrv33szOLlb7JaeZOed8351zZu6hiy7ScAZrOKxbDRf/p4B7AXnDXqQkOhHhcxOvMBSsnS7wC9f664Jup4gKcRe/ZF/4FdcxiBXNJ1DDpbpt1dcO8DiVfCIgb8cOMFNGUlWCGziZqj5Aj6yMLeMc9rR/At8xmqr+aknSDxiXNd4pjGFJdtx536lUcrKGyydcrPB/UCBivFXSs5jFE6znkn2MiH+Xi9nBMzzChRgBm8rrORERf6UifjNGQFVD9UXE9+BnSfyPvHPMS3isKBLwucI/5jpdRm/J3m5E/N8mfKozTVjDPOZENmGIIc11XKjwv6/5Gl5rlTREJx6iyVTy8zrzFH/DSIqANx0gb9j7MpKqa7iM3ynKczjEp9TgaUczwb6soYaxqvkrv8hewVFsO5oFkgeSBm7htezH1MBsgYC3wf4AXuJOu+RleFgg4PlxkRWhHxsB+Y5/h9YuuojGH6lk4lTsctw/AAAAAElFTkSuQmCC">		
+				
+		
+		<!--<div id="diagrama"  style="position: relative;" ></div>-->
+		<div style="position: relative;">
+			<div id="diagrama1" style="z-index: 0;"></div>
+			<div id="diagrama2" style="z-index: 1;"></div>
+		</div>
+
+	</body>	
+</html>
+
+
+<script type="text/javascript">
+
+var context = null;
+var ctx2 = null;
+var tela_=null;
+//copy(can.toDataURL("image/png")+"");
+	
+	
+var Tela = function(a) {
+	// validacao
+    if (document.getElementById('diagrama1') == null || document.getElementById('diagrama1').nodeName != "DIV") { alert("ERROR"); console.log("DIV \"" + document.getElementById('diagrama1') + "\" nao encontrada!"); return;}
+	tela_=this;
+	
+    this._width = a.width;
+    this._height = a.height;
+	this._name = a.name;
+	
+	this._fundos = [];
+	this._nodes = [];
+	this._ligacoes = [];
+	
+	// canvas context
+	var can = document.createElement("canvas");
+    can.width = this._width;
+    can.height = this._height;
+    context = can.getContext("2d");
+	document.getElementById('diagrama1').appendChild(can);
+	context.globalAlpha = .4;	
+	
+    this._element = null;
+	
+	this.show = function() {			
+		context.clearRect(0, 0, this._width, this._height);   // clean
+		context.fillStyle = "#222222";                        // branco		
+		context.fillRect(0, 0, this._width, this._height);	   // preenchendo fundo		
+		
+		for (var i = 0; i < this._fundos.length; i++)   this._fundos[i].show()
+		for (var i = 0; i < this._nodes.length; i++)   	this._nodes[i].show()		
+		for (var i = 0; i < this._ligacoes.length; i++) this.showligacao(this._ligacoes[i]);		
+	};
+
+	// var external
+	tela_call_external=this;
+	
+	// method external
+    this.mousedown = function(e) {
+        for (var b = 0; b < tela_call_external._nodes.length ; b++) {			
+			if (e.pageX-8 >= tela_call_external._nodes[b]._x && e.pageX-8 <= tela_call_external._nodes[b]._x + tela_call_external._nodes[b]._width && e.pageY-8 >= tela_call_external._nodes[b]._y && e.pageY-8 <= tela_call_external._nodes[b]._y + tela_call_external._nodes[b]._height){
+				tela_call_external._nodes[b]._relx = e.pageX - tela_call_external._nodes[b]._x;
+				tela_call_external._nodes[b]._rely = e.pageY - tela_call_external._nodes[b]._y;
+                tela_call_external._element = tela_call_external._nodes[b];
+				break;
+            }
+        };
+    };
+	
+	// method external
+    this.mousemove = function(d) {
+		if(tela_call_external._element == null ) return;
+		// limite de borda
+		if (d.pageX < 0 || d.pageY < 0 || d.pageX >= tela_call_external._width || d.pageY >= tela_call_external._height) return;
+		// movendo coordenadas do objeto
+		tela_call_external._element._x = d.pageX - tela_call_external._element._relx;
+		tela_call_external._element._y = d.pageY - tela_call_external._element._rely;
+		// printando o objeto se movendo		
+        tela_call_external.show()		
+    };
+	
+	// method external
+    this.mouseup = function(d) {	
+		tela_call_external._element = null;
+		tela_call_external.show();
+    };	
+	
+	
+	window.addEventListener("mousedown", this.mousedown, false);
+	window.addEventListener("mousemove", this.mousemove, false);
+	window.addEventListener("mouseup", this.mouseup, false);	
+
+	this._fundos.push(new Fundo());
+};
+
+Tela.prototype.showligacao = function(info){
+	
+	// info contem,    num node, pos, num node, pos
+	if ( info[0] <= this._nodes.length && info[2] <= this._nodes.length && info[1] < this._nodes[info[0]]._n_slots_dir && info[3] < this._nodes[info[2]]._n_slots_esq )
+	{
+		var tmp=95;
+		
+		var p1 = this._nodes[info[0]].getPoint(info[1],true);
+		var p2 = this._nodes[info[2]].getPoint(info[3],false);
+		// deslocando a posição de slot para ponta do fio		
+		p1[0]+=5.5;
+		p2[0]-=this._nodes[info[0]]._linha*2;
+		
+		context.lineWidth = 3;
+		context.strokeStyle = "#509090";	
+		context.beginPath();
+		context.moveTo(p1[0], p1[1]);
+		context.quadraticCurveTo(p1[0]+tmp, p1[1], (p1[0]+p2[0])/2, (p1[1]+p2[1])/2 );
+		context.moveTo(p2[0], p2[1]);
+		context.quadraticCurveTo(p2[0]-tmp, p2[1], (p1[0]+p2[0])/2, (p1[1]+p2[1])/2 );
+		
+		context.stroke();
+		
+	}
+}
+
+Tela.prototype.addNode = function(a,b,c){
+	this._nodes.push(new Node({ x:a, y:b, name:c }));
+}
+
+Tela.prototype.addLigacao = function(a,b,c,d){
+	this._ligacoes.push([a,b,c,d]);
+}
+
+var Fundo = function() {
+	
+};
+
+Fundo.prototype.show = function() {
+	for ( var i=10;i<2000;i+=120){
+		this.linha(i,2000,0);
+		this.linha(i,2000,1);
+		this.cubo(i,2000)
+	}	
+}
+
+Fundo.prototype.linha = function(a,b,c) {
+	var d=2;
+
+	context.beginPath();
+	context.fillStyle = "#070707";	
+	if ( c == 0 ){
+		for ( var i=13-120;i<b;i+=120 )
+		{
+			context.moveTo(a, i);
+			context.lineTo(a+d,i);
+			context.lineTo(a+d,i+117);
+			context.lineTo(a,i+117);
+			context.lineTo(a,i);
+		}
+	}else{
+		context.moveTo(0, a);
+		context.lineTo(0,a+d);
+		context.lineTo(b,a+d);
+		context.lineTo(b,a);
+		context.lineTo(0,a);
+	}
+	
+	context.fill();	
+}
+
+Fundo.prototype.cubo = function(a,b) {
+	a+=3-120;
+	tmp=14;
+	context.beginPath();
+	context.fillStyle = "#222222";	
+	for ( var i=13-120;i<b;i+=120 )
+	{
+		for ( var j=0;j<8;j++ )
+		{
+			for ( var k=0;k<8;k++ )
+			{
+				context.moveTo(a+j*15, i+k*15);
+				context.lineTo(a+tmp+j*15,i+k*15);
+				context.lineTo(a+tmp+j*15,i+tmp+k*15);
+				context.lineTo(a+j*15,i+tmp+k*15);
+				context.lineTo(a+j*15,i+k*15);
+			}
+		}
+	}
+	
+	context.fill();	
+	
+}
+
+
+var Node = function(a) {	
+	this._linha = 10;	
+	this._fresta = 10;
+	
+    this._x = a.x;
+    this._y = a.y;
+	
+	this._height = 70;
+	this._width = 150;
+	
+	this._text = a.name;
+	
+	this._relx = 0;
+	this._rely = 0;
+		
+	this._espaco_entre_slots = 25;
+	this._n_slots_esq=2;
+	this._n_slots_dir=2;
+	
+	this._cor_fio="#599";
+	this._cor_slot="#599";
+	
+	this._cor1="#2E9AFE";	// cor degrade 1     - azul
+	this._cor2="#444444";	// cor degrade 2     - cinza
+	this._cor3="#030303";	// cor preenchimento - preto
+	
+	this._fonte_txt = ' 12pt Calibri';
+	this._px_fonte_txt = 16;
+	this._cor_fonte_txt = '#ffffff';
+	
+	this._lineWidth = 3;
+};
+
+Node.prototype.linha = function(x1,y1,x2,y2){
+	context.lineWidth = this._lineWidth;
+	context.strokeStyle = this._cor_fio;	
+	context.beginPath();
+	context.moveTo(100, 250);
+	context.quadraticCurveTo(300.43242, 250, 400, 500);
+	context.stroke();
+
+}
+
+Node.prototype.printa = function(x1,y1,x2,y2,cor1,degrade,x,y,cor2,cor3) {
+	context.beginPath();
+	
+	if ( degrade ){
+		var gradient=context.createRadialGradient(x-60,y-100,5,x-60,y-100,200);
+		gradient.addColorStop("0.6",cor2);
+		gradient.addColorStop("1.0",cor3);	
+		context.fillStyle = gradient;
+		context.fillRect(x1,y1,x2-x1,y2-y1);
+	}else{
+		context.moveTo(x1, y1);
+		context.lineTo(x2, y1);
+		context.lineTo(x2, y2);
+		context.lineTo(x1, y2);
+		context.fillStyle = cor1;	
+	}
+	
+	context.fill();	
+}
+
+Node.prototype.printaborda = function(x,y,linha,tipo_borda,cor) {
+	context.beginPath();			
+	context.strokeStyle = cor;		
+	context.lineWidth = linha;	
+	context.arc(x, y, linha/2, Math.PI*(tipo_borda/2+0.5), Math.PI*(tipo_borda/2+1));
+	context.stroke();
+}
+
+Node.prototype.printatexto = function(x,y,txt,cor,fonte,altura_fonte_em_px) {
+	context.drawImage(document.getElementById("img_engrenagem"), x- this._linha*0.5,y - (this._linha+this._fresta-altura_fonte_em_px)/2 - altura_fonte_em_px*1.17 ,22,22);    
+	context.beginPath();					
+	context.fillStyle = cor;
+	context.font = fonte;
+	context.fillText(txt, x + this._linha*2,y - (this._linha+this._fresta-altura_fonte_em_px) );
+	context.fill();		
+}
+
+Node.prototype.getPoint = function(n_slot,isSender){		
+	if ( isSender )
+		return [this._x+this._width-this._linha*2,this._y+this._fresta+this._linha+this._espaco_entre_slots/2+n_slot*this._espaco_entre_slots];
+	return [this._x+this._linha*2,this._y+this._fresta+this._linha+this._espaco_entre_slots/2+n_slot*this._espaco_entre_slots];
+}
+
+Node.prototype.printaslots = function(){
+	var p = null;
+	var numero_deste_node=-1;
+	var achou=false;
+	for ( var i=0;i<tela_._nodes.length;i++ ){
+		if (this == tela_._nodes[i]){
+			numero_deste_node=i;
+			break;
+		}
+	}
+	if ( numero_deste_node == -1 ) return;
+	for ( var i=0;i<this._n_slots_esq;i++ )
+	{
+		p = this.getPoint(i,false);
+		achou=false;
+		for ( var j=0;j<tela_._ligacoes.length;j++ )
+		{
+			if ( tela_._ligacoes[j][2] != numero_deste_node ) continue;
+			if ( tela_._ligacoes[j][3] != i ) continue;
+			achou=true;
+			// bolinha preenchida
+			context.beginPath();			
+			context.strokeStyle = this._cor_slot;		
+			context.lineWidth = this._lineWidth*2;	
+			context.arc(p[0], p[1], this._lineWidth*0.9, Math.PI*0.5, Math.PI*2.5);
+			context.stroke();
+			break;
+		}
+		if ( !achou ){
+			// bolinha ñ preenchida
+			context.beginPath();			
+			context.strokeStyle = this._cor_slot;		
+			context.lineWidth = this._lineWidth/2;	
+			context.arc(p[0], p[1], this._lineWidth*1.5, Math.PI*0.5, Math.PI*2.5);
+			context.stroke();
+		
+		}
+	}
+	
+	for ( var i=0;i<this._n_slots_dir;i++ )
+	{
+		p = this.getPoint(i,true);
+		achou=false;
+		for ( var j=0;j<tela_._ligacoes.length;j++ )
+		{
+			if ( tela_._ligacoes[j][0] != numero_deste_node ) continue;
+			if ( tela_._ligacoes[j][1] != i ) continue;
+			achou=true;
+			// bolinha preenchida
+			context.beginPath();			
+			context.strokeStyle = this._cor_slot;		
+			context.lineWidth = this._lineWidth*2;	
+			context.arc(p[0], p[1], this._lineWidth*0.9, Math.PI*0.5, Math.PI*2.5);
+			context.stroke();
+			break;
+		}
+		if ( !achou ){
+			// bolinha ñ preenchida
+			context.beginPath();			
+			context.strokeStyle = this._cor_slot;		
+			context.lineWidth = this._lineWidth/2;	
+			context.arc(p[0], p[1], this._lineWidth*1.5, Math.PI*0.5, Math.PI*2.5);
+			context.stroke();
+		
+		}
+	}
+		
+}
+
+Node.prototype.show = function() {	
+	var linha= this._linha;	
+	var fresta = this._fresta;	
+	
+	var x = this._x+linha;	
+	var y = this._y+fresta+linha;
+
+	var width = this._width-linha*2;
+	var height = this._height-fresta-linha*2;
+	
+	var fonte_txt = this._fonte_txt;
+	var px_fonte_txt = this._px_fonte_txt;
+	var cor_fonte_txt = this._cor_fonte_txt;
+	
+	var cor1=this._cor1; 	// cor degrade 1     - azul
+	var cor2=this._cor2;	// cor degrade 2     - cinza
+	var cor3=this._cor3;	// cor preenchimento - preto
+	
+	// mostra x,y
+	//this.printa(x,y,x+3.5,y+3.5,'#ffff00',false,x,y,cor2,cor3);	
+
+	// contornos superiores
+	this.printaborda(x,y-fresta,linha,1,cor1);	
+	this.printaborda(x+width,y-fresta,linha,2,cor2);	
+	// linha entre os contornos
+
+	this.printa(x,y-linha-fresta,x+width,y-fresta,cor3,true,x,y,cor1,cor2);	
+
+	// completando a fresta superior
+	this.printa(x-linha,y-fresta,x+width+linha, y,cor3,true,x,y,cor1,cor2);
+	
+	// contornos inferiores
+	this.printaborda(x+width, y+height, linha,3,cor3);
+	this.printaborda(x, y+height, linha,4,cor3);
+	// 3 linhas faltando, uma esta entre os dois contornos criados acima
+	this.printa(x-linha,y,x,y+height,cor3,false,x,y);
+	this.printa(x+width,y,x+width+linha,y+height,cor3,false,x,y,cor1,cor2);
+	this.printa(x,y+height,x+width,y+height+linha,cor3,false,x,y,cor1,cor2);
+
+	// preenchendo do objeto
+	this.printa(x,y,x+width, y+height,cor3,false,x,y,cor1,cor2);
+	
+	// preenchendo nome objeto
+	this.printatexto(x,y,this._text,cor_fonte_txt,fonte_txt,px_fonte_txt);
+	
+	this.printaslots();
+};
+
+window.onload = function(){
+	var tela = new Tela({width: 1420, height: 790, name: "Component JS v1.15"});		
+	tela.addNode(150, 250, "dsadasdasdasd");
+	tela.addNode(650, 350, "AAA");	
+	tela.addNode(950, 200, "ffdsf");		
+	tela.addLigacao(0,0,1,0);
+	tela.addLigacao(0,1,1,1);
+	tela.addLigacao(1,0,2,0);
+	tela.show();
+}
+
+</script>    
