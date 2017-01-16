@@ -41,7 +41,7 @@ var Tela = function(a) {
 	
 	this._fundos = [];
 	this._nodes = [];
-	this._ligacoes = [];
+	this._ligacoes = []; // a,b,c,d .... origem,numseq,destino,numseq
 	
 	// canvas context
 	var can = document.createElement("canvas");
@@ -52,6 +52,7 @@ var Tela = function(a) {
 	context.globalAlpha = .4;	
 	
     this._element = null;
+	this._printingslot = false;
 	
 	this.show = function() {			
 		context.clearRect(0, 0, this._width, this._height);   // clean
@@ -79,13 +80,51 @@ var Tela = function(a) {
     };
 	
 	// method external
-    this.mousemove = function(d) {
-		if(tela_call_external._element == null ) return;
+    this.mousemove = function(e) {		
+		var tmp=10;
+		
+		if ( tela_call_external._printingslot ){
+			tela_call_external._printingslot=false;
+			tela_call_external.show();
+		}
+		
+		if(tela_call_external._element == null ){
+			for (var b = 0; b < tela_call_external._nodes.length ; b++) {			
+				if (e.pageX-8 >= tela_call_external._nodes[b]._x && e.pageX-8 <= tela_call_external._nodes[b]._x + tela_call_external._nodes[b]._width && e.pageY-8 >= tela_call_external._nodes[b]._y && e.pageY-8 <= tela_call_external._nodes[b]._y + tela_call_external._nodes[b]._height){										
+					for ( var c=0;c<tela_call_external._nodes[b]._n_slots_esq;c++ ){
+						var p = tela_call_external._nodes[b].getPoint(c,false);
+						if ( e.pageX-8 >= p[0]-tmp && e.pageX-8 <= p[0]+tmp && e.pageY-8 >= p[1]-tmp && e.pageY-8 <= p[1]+tmp ){							
+							if ( tela_call_external._nodes[b].getnumligacaobyslot(c,false,0) != -1 )
+							{
+								tela_call_external.show();
+								tela_call_external._nodes[b].printaslotmouse(b,c,false);
+								tela_call_external._printingslot=true;
+							}
+							return;
+						}
+					}
+					for ( var c=0;c<tela_call_external._nodes[b]._n_slots_dir;c++ ){
+						var p = tela_call_external._nodes[b].getPoint(c,true);
+						if ( e.pageX-8 >= p[0]-tmp && e.pageX-8 <= p[0]+tmp && e.pageY-8 >= p[1]-tmp && e.pageY-8 <= p[1]+tmp ){
+							if ( tela_call_external._nodes[b].getnumligacaobyslot(c,true,0) != -1 )
+							{
+								tela_call_external.show();
+								tela_call_external._nodes[b].printaslotmouse(b,c,true);
+								tela_call_external._printingslot=true;
+							}
+							return;
+						}						
+					}
+				}
+			};			
+			return;
+		}
+		
 		// limite de borda
-		if (d.pageX < 0 || d.pageY < 0 || d.pageX >= tela_call_external._width || d.pageY >= tela_call_external._height) return;
+		if (e.pageX < 0 || e.pageY < 0 || e.pageX >= tela_call_external._width || e.pageY >= tela_call_external._height) return;
 		// movendo coordenadas do objeto
-		tela_call_external._element._x = d.pageX - tela_call_external._element._relx;
-		tela_call_external._element._y = d.pageY - tela_call_external._element._rely;
+		tela_call_external._element._x = e.pageX - tela_call_external._element._relx;
+		tela_call_external._element._y = e.pageY - tela_call_external._element._rely;
 		// printando o objeto se movendo		
         tela_call_external.show()		
     };
@@ -95,7 +134,6 @@ var Tela = function(a) {
 		tela_call_external._element = null;
 		tela_call_external.show();
     };	
-	
 	
 	window.addEventListener("mousedown", this.mousedown, false);
 	window.addEventListener("mousemove", this.mousemove, false);
@@ -286,74 +324,86 @@ Node.prototype.getPoint = function(n_slot,isSender){
 	return [this._x+this._linha*2,this._y+this._fresta+this._linha+this._espaco_entre_slots/2+n_slot*this._espaco_entre_slots];
 }
 
+Node.prototype.getnumligacaobyslot = function(numseq,isSender,requestid){
+	var id=this.getidnode();
+	var tmp_lig = [];
+	for ( var j=0;j<tela_._ligacoes.length;j++ )
+	{
+		if ( ( isSender && tela_._ligacoes[j][1] == numseq ) || ( !isSender && tela_._ligacoes[j][3] == numseq ) ) {
+			if ( ( isSender && tela_._ligacoes[j][0] == id ) || ( !isSender && tela_._ligacoes[j][2] == id ) ){
+				if ( requestid == 0 )
+					return j;
+				tmp_lig.push(j);
+			}
+		}		
+	}
+	if ( tmp_lig.length == 0 )
+		return -1;
+	while ( requestid > 0 ){
+		tmp_lig.push(tmp_lig[0]);
+		tmp_lig.shift();
+	}
+	return tmp_lig[0];
+}
+
+Node.prototype.getidnode = function(){
+	for ( var i=0;i<tela_._nodes.length;i++ ){
+		if (this == tela_._nodes[i])
+			return i;
+	}
+	return -1;
+}
+
 Node.prototype.printaslots = function(){
 	var p = null;
-	var numero_deste_node=-1;
-	var achou=false;
-	for ( var i=0;i<tela_._nodes.length;i++ ){
-		if (this == tela_._nodes[i]){
-			numero_deste_node=i;
-			break;
-		}
-	}
-	if ( numero_deste_node == -1 ) return;
 	for ( var i=0;i<this._n_slots_esq;i++ )
 	{
 		p = this.getPoint(i,false);
-		achou=false;
-		for ( var j=0;j<tela_._ligacoes.length;j++ )
-		{
-			if ( tela_._ligacoes[j][2] != numero_deste_node ) continue;
-			if ( tela_._ligacoes[j][3] != i ) continue;
-			achou=true;
-			// bolinha preenchida
+		if ( this.getnumligacaobyslot(i,false,0) != -1 ){
 			context.beginPath();			
 			context.strokeStyle = this._cor_slot;		
 			context.lineWidth = this._lineWidth*2;	
 			context.arc(p[0], p[1], this._lineWidth*0.9, Math.PI*0.5, Math.PI*2.5);
 			context.stroke();
-			break;
-		}
-		if ( !achou ){
-			// bolinha ñ preenchida
+		}else{
 			context.beginPath();			
 			context.strokeStyle = this._cor_slot;		
 			context.lineWidth = this._lineWidth/2;	
 			context.arc(p[0], p[1], this._lineWidth*1.5, Math.PI*0.5, Math.PI*2.5);
 			context.stroke();
-		
 		}
 	}
-	
 	for ( var i=0;i<this._n_slots_dir;i++ )
 	{
 		p = this.getPoint(i,true);
-		achou=false;
-		for ( var j=0;j<tela_._ligacoes.length;j++ )
-		{
-			if ( tela_._ligacoes[j][0] != numero_deste_node ) continue;
-			if ( tela_._ligacoes[j][1] != i ) continue;
-			achou=true;
-			// bolinha preenchida
+		if ( this.getnumligacaobyslot(i,true,0) != -1 ){
 			context.beginPath();			
 			context.strokeStyle = this._cor_slot;		
 			context.lineWidth = this._lineWidth*2;	
 			context.arc(p[0], p[1], this._lineWidth*0.9, Math.PI*0.5, Math.PI*2.5);
 			context.stroke();
-			break;
-		}
-		if ( !achou ){
-			// bolinha ñ preenchida
+		}else{
 			context.beginPath();			
 			context.strokeStyle = this._cor_slot;		
 			context.lineWidth = this._lineWidth/2;	
 			context.arc(p[0], p[1], this._lineWidth*1.5, Math.PI*0.5, Math.PI*2.5);
 			context.stroke();
-		
 		}
 	}
-		
 }
+
+Node.prototype.printaslotmouse = function(id_node,num_seq,isSender){
+	var p = tela_._nodes[id_node].getPoint(num_seq,isSender);
+	context.strokeStyle = '#ffffff';		
+	for ( var i=0;i<2;i+=2/8 ){
+		context.beginPath();			
+		context.lineWidth = this._lineWidth/4;	
+		context.arc(p[0], p[1], this._lineWidth*3.5, Math.PI*i, Math.PI*(i+(1/8)));
+		context.stroke();	
+	}
+}
+
+
 
 Node.prototype.show = function() {	
 	var linha= this._linha;	
@@ -389,7 +439,7 @@ Node.prototype.show = function() {
 	// contornos inferiores
 	this.printaborda(x+width, y+height, linha,3,cor3);
 	this.printaborda(x, y+height, linha,4,cor3);
-	// 3 linhas faltando, uma esta entre os dois contornos criados acima
+	// 3 linhas restantes
 	this.printa(x-linha,y,x,y+height,cor3,false,x,y);
 	this.printa(x+width,y,x+width+linha,y+height,cor3,false,x,y,cor1,cor2);
 	this.printa(x,y+height,x+width,y+height+linha,cor3,false,x,y,cor1,cor2);
