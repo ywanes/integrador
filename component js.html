@@ -41,7 +41,13 @@ var Tela = function(a) {
 	
 	this._fundos = [];
 	this._nodes = [];
-	this._ligacoes = []; // a,b,c,d .... origem,numseq,destino,numseq
+	this._ligacoes = []; // [[origem,numseq,destino,numseq]]
+	
+	this._flyingEnable = false;
+	this._flyingPivo = 0;
+	this._flyingId = 0;
+	this._flyingNumSeq = 0;
+	this._flyingIsSender = false;
 	
 	// canvas context
 	var can = document.createElement("canvas");
@@ -69,48 +75,61 @@ var Tela = function(a) {
 	
 	// method external
     this.mousedown = function(e) {
-        for (var b = 0; b < tela_call_external._nodes.length ; b++) {			
-			if (e.pageX-8 >= tela_call_external._nodes[b]._x && e.pageX-8 <= tela_call_external._nodes[b]._x + tela_call_external._nodes[b]._width && e.pageY-8 >= tela_call_external._nodes[b]._y && e.pageY-8 <= tela_call_external._nodes[b]._y + tela_call_external._nodes[b]._height){
-				tela_call_external._nodes[b]._relx = e.pageX - tela_call_external._nodes[b]._x;
-				tela_call_external._nodes[b]._rely = e.pageY - tela_call_external._nodes[b]._y;
-                tela_call_external._element = tela_call_external._nodes[b];
+		tela_call_external.mousedown_redefined(e);
+    };
+	
+	// method external
+    this.mousemove = function(e) {		
+		tela_call_external.mousemove_redefined(e);
+    };
+
+	// method external
+    this.mouseup = function(d) {	
+		tela_call_external.mouseup_redefined(d);
+    };	
+
+    this.mousedown_redefined = function(e) {
+        for (var b = 0; b < this._nodes.length ; b++) {			
+			if (e.pageX-8 >= this._nodes[b]._x && e.pageX-8 <= this._nodes[b]._x + this._nodes[b]._width && e.pageY-8 >= this._nodes[b]._y && e.pageY-8 <= this._nodes[b]._y + this._nodes[b]._height){
+				this._nodes[b]._relx = e.pageX - this._nodes[b]._x;
+				this._nodes[b]._rely = e.pageY - this._nodes[b]._y;
+                this._element = this._nodes[b];
 				break;
             }
         };
     };
 	
-	// method external
-    this.mousemove = function(e) {		
+	this.mousemove_redefined = function(e) {		
 		var tmp=10;
 		
-		if ( tela_call_external._printingslot ){
-			tela_call_external._printingslot=false;
-			tela_call_external.show();
+		if ( this._printingslot ){
+			this._printingslot=false;
+			this.show();
 		}
 		
-		if(tela_call_external._element == null ){
-			for (var b = 0; b < tela_call_external._nodes.length ; b++) {			
-				if (e.pageX-8 >= tela_call_external._nodes[b]._x && e.pageX-8 <= tela_call_external._nodes[b]._x + tela_call_external._nodes[b]._width && e.pageY-8 >= tela_call_external._nodes[b]._y && e.pageY-8 <= tela_call_external._nodes[b]._y + tela_call_external._nodes[b]._height){										
-					for ( var c=0;c<tela_call_external._nodes[b]._n_slots_esq;c++ ){
-						var p = tela_call_external._nodes[b].getPoint(c,false);
+		if(this._element == null ){
+			for (var b = 0; b < this._nodes.length ; b++) {			
+				if (e.pageX-8 >= this._nodes[b]._x && e.pageX-8 <= this._nodes[b]._x + this._nodes[b]._width && e.pageY-8 >= this._nodes[b]._y && e.pageY-8 <= this._nodes[b]._y + this._nodes[b]._height){										
+					for ( var c=0;c<this._nodes[b]._n_slots_esq;c++ ){
+						var p = this._nodes[b].getPoint(c,false);
 						if ( e.pageX-8 >= p[0]-tmp && e.pageX-8 <= p[0]+tmp && e.pageY-8 >= p[1]-tmp && e.pageY-8 <= p[1]+tmp ){							
-							if ( tela_call_external._nodes[b].getnumligacaobyslot(c,false,0) != -1 )
+							if ( this._nodes[b].getnumligacaobyslot(c,false,0) != -1 )
 							{
-								tela_call_external.show();
-								tela_call_external._nodes[b].printaslotmouse(b,c,false);
-								tela_call_external._printingslot=true;
+								this.show();
+								this._nodes[b].printaslotmouse(b,c,false);
+								this._printingslot=true;
 							}
 							return;
 						}
 					}
-					for ( var c=0;c<tela_call_external._nodes[b]._n_slots_dir;c++ ){
-						var p = tela_call_external._nodes[b].getPoint(c,true);
+					for ( var c=0;c<this._nodes[b]._n_slots_dir;c++ ){
+						var p = this._nodes[b].getPoint(c,true);
 						if ( e.pageX-8 >= p[0]-tmp && e.pageX-8 <= p[0]+tmp && e.pageY-8 >= p[1]-tmp && e.pageY-8 <= p[1]+tmp ){
-							if ( tela_call_external._nodes[b].getnumligacaobyslot(c,true,0) != -1 )
+							if ( this._nodes[b].getnumligacaobyslot(c,true,0) != -1 )
 							{
-								tela_call_external.show();
-								tela_call_external._nodes[b].printaslotmouse(b,c,true);
-								tela_call_external._printingslot=true;
+								this.show();
+								this._nodes[b].printaslotmouse(b,c,true);
+								this._printingslot=true;
 							}
 							return;
 						}						
@@ -121,19 +140,18 @@ var Tela = function(a) {
 		}
 		
 		// limite de borda
-		if (e.pageX < 0 || e.pageY < 0 || e.pageX >= tela_call_external._width || e.pageY >= tela_call_external._height) return;
+		if (e.pageX < 0 || e.pageY < 0 || e.pageX >= this._width || e.pageY >= this._height) return;
 		// movendo coordenadas do objeto
-		tela_call_external._element._x = e.pageX - tela_call_external._element._relx;
-		tela_call_external._element._y = e.pageY - tela_call_external._element._rely;
+		this._element._x = e.pageX - this._element._relx;
+		this._element._y = e.pageY - this._element._rely;
 		// printando o objeto se movendo		
-        tela_call_external.show()		
-    };
+        this.show()		
+	}
 	
-	// method external
-    this.mouseup = function(d) {	
-		tela_call_external._element = null;
-		tela_call_external.show();
-    };	
+	this.mouseup_redefined = function(d){
+		this._element = null;
+		this.show();
+	}
 	
 	window.addEventListener("mousedown", this.mousedown, false);
 	window.addEventListener("mousemove", this.mousemove, false);
