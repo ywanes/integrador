@@ -59,7 +59,7 @@ var Tela = function(a) {
 	this.show = function() {			
 		context.clearRect(0, 0, this._width, this._height);   // clean
 		context.fillStyle = "#222222";                        // branco		
-		context.fillRect(0, 0, this._width, this._height);	   // preenchendo fundo		
+		context.fillRect(0, 0, this._width, this._height);	  // preenchendo fundo		
 		
 		for (var i = 0; i < this._fundos.length; i++)   this._fundos[i].show()
 		for (var i = 0; i < this._nodes.length; i++)   	this._nodes[i].show()		
@@ -76,10 +76,28 @@ var Tela = function(a) {
 		var tmp=10;
         for (var b = 0; b < this._nodes.length ; b++) {						
 			if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
-				this._nodes[b]._relx = e.pageX - this._nodes[b]._x;
-				this._nodes[b]._rely = e.pageY - this._nodes[b]._y;
-                this._element = this._nodes[b];
-				break;
+				var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);
+				if ( slot == null ){
+					this._nodes[b]._relx = e.pageX - this._nodes[b]._x;
+					this._nodes[b]._rely = e.pageY - this._nodes[b]._y;
+					this._element = this._nodes[b];
+					break;
+				}else{					
+					var n_ligacao = this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0);
+					var id=-1;
+					if ( !slot[1] )
+						id=this._ligacoes[n_ligacao][0];
+					else
+						id=this._ligacoes[n_ligacao][2];
+						
+					if ( n_ligacao != -1 )
+					{
+						this._ligacoes.splice(n_ligacao,1);
+						this.show();
+						this._flying = [id,slot[0],slot[1]];
+					}			
+					
+				}
             }
         };
     };
@@ -90,6 +108,20 @@ var Tela = function(a) {
 		if ( this._printingslot ){
 			this._printingslot=false;
 			this.show();
+		}
+		
+		if ( this._flying != null ){			
+			this.show();
+			var p1=this._nodes[this._flying[0]].getPoint(this._flying[1],!this._flying[2]);
+			var p2=null;
+			if ( this._flying[2] ){
+				p2=p1;
+				p1=[e.pageX-8-2,e.pageY-8];
+			}else{
+				p2=[e.pageX-8+20,e.pageY-8];
+			}
+			this.showfio(p1,p2);			
+			return;
 		}
 		
 		if(this._element == null ){
@@ -120,29 +152,33 @@ var Tela = function(a) {
 		this.show();
 	}
 
+	this.showfio = function(p1,p2){
+		var tmp=95;
+
+		// deslocando a posição de slot para ponta do fio		
+		p1[0]+=5.5;
+		p2[0]-=20;			
+		
+		context.lineWidth = 3;
+		context.strokeStyle = "#509090";	
+		context.beginPath();
+		context.moveTo(p1[0], p1[1]);
+		context.quadraticCurveTo(p1[0]+tmp, p1[1], (p1[0]+p2[0])/2, (p1[1]+p2[1])/2 );
+		context.moveTo(p2[0], p2[1]);
+		context.quadraticCurveTo(p2[0]-tmp, p2[1], (p1[0]+p2[0])/2, (p1[1]+p2[1])/2 );
+		
+		context.stroke();	
+	}
+	
 	this.showligacao = function(info){
 		
 		// info contem,    num node, pos, num node, pos
 		if ( info[0] <= this._nodes.length && info[2] <= this._nodes.length && info[1] < this._nodes[info[0]]._n_slots_dir && info[3] < this._nodes[info[2]]._n_slots_esq )
 		{
-			var tmp=95;
-			
 			var p1 = this._nodes[info[0]].getPoint(info[1],true);
 			var p2 = this._nodes[info[2]].getPoint(info[3],false);
-			// deslocando a posição de slot para ponta do fio		
-			p1[0]+=5.5;
-			p2[0]-=this._nodes[info[0]]._linha*2;
 			
-			context.lineWidth = 3;
-			context.strokeStyle = "#509090";	
-			context.beginPath();
-			context.moveTo(p1[0], p1[1]);
-			context.quadraticCurveTo(p1[0]+tmp, p1[1], (p1[0]+p2[0])/2, (p1[1]+p2[1])/2 );
-			context.moveTo(p2[0], p2[1]);
-			context.quadraticCurveTo(p2[0]-tmp, p2[1], (p1[0]+p2[0])/2, (p1[1]+p2[1])/2 );
-			
-			context.stroke();
-			
+			this.showfio(p1,p2);
 		}
 	}
 	
