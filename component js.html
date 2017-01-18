@@ -43,7 +43,7 @@ var Tela = function(a) {
 	this._nodes = [];
 	this._ligacoes = []; // [[origem,numseq,destino,numseq]]
 	
-	this._flying = null; // 	[fixIsSender,id,numseq,isSender]
+	this._flying = null; // 	[id,numseq,isSender,x,y]
 	
 	// canvas context
 	var can = document.createElement("canvas");
@@ -54,7 +54,7 @@ var Tela = function(a) {
 	context.globalAlpha = .4;	
 	
     this._element = null;
-	this._printingslot = false;
+	this._printingslot = null;
 	
 	this.show = function() {			
 		context.clearRect(0, 0, this._width, this._height);   // clean
@@ -64,25 +64,32 @@ var Tela = function(a) {
 		for (var i = 0; i < this._fundos.length; i++)   this._fundos[i].show()
 		for (var i = 0; i < this._nodes.length; i++)   	this._nodes[i].show()		
 		for (var i = 0; i < this._ligacoes.length; i++) this.showligacao(this._ligacoes[i]);		
+		
+		if ( this._flying != null ){						
+			var p1=this._nodes[this._flying[0]].getPoint(this._flying[1],!this._flying[2]);
+			var p2=null;
+			if ( this._flying[2] ){
+				p2=p1;
+				p1=[this._flying[3]-8-2,this._flying[4]-8];
+			}else{
+				p2=[this._flying[3]-8+20,this._flying[4]-8];
+			}
+			this.showfio(p1,p2);			
+		}
+		
 	};
 
 	// rotinas externas
-	tela_call_external=this;
-    this.mousedown = function(e) { tela_call_external.mousedown_redefined(e); };
-    this.mousemove = function(e) { tela_call_external.mousemove_redefined(e); };
-    this.mouseup =   function(e) { tela_call_external.mouseup_redefined(e);   };	
+    this.mousedown = function(e) { tela_.mousedown_redefined(e); };
+    this.mousemove = function(e) { tela_.mousemove_redefined(e); };
+    this.mouseup =   function(e) { tela_.mouseup_redefined(e);   };	
 
     this.mousedown_redefined = function(e) {
 		var tmp=10;
         for (var b = 0; b < this._nodes.length ; b++) {						
 			if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
 				var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);
-				if ( slot == null ){
-					this._nodes[b]._relx = e.pageX - this._nodes[b]._x;
-					this._nodes[b]._rely = e.pageY - this._nodes[b]._y;
-					this._element = this._nodes[b];
-					break;
-				}else{					
+				if ( slot != null && this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0) != -1 ){
 					var n_ligacao = this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0);
 					var id=-1;
 					if ( !slot[1] )
@@ -90,13 +97,18 @@ var Tela = function(a) {
 					else
 						id=this._ligacoes[n_ligacao][2];
 						
+					// mesmo que a consistencia de -1 ja foi feita, aqui precisamos consistir novamente por questoes de segurança, caso seja feito alguma alteração acima
 					if ( n_ligacao != -1 )
 					{
-						this._ligacoes.splice(n_ligacao,1);
+						this._ligacoes.splice(n_ligacao,1);						
+						this._flying = [id,slot[0],slot[1],e.pageX,e.pageY];
 						this.show();
-						this._flying = [id,slot[0],slot[1]];
-					}			
-					
+					}								
+				}else{					
+					this._nodes[b]._relx = e.pageX - this._nodes[b]._x;
+					this._nodes[b]._rely = e.pageY - this._nodes[b]._y;
+					this._element = this._nodes[b];
+					break;
 				}
             }
         };
@@ -105,49 +117,43 @@ var Tela = function(a) {
 	this.mousemove_redefined = function(e) {		
 		var tmp=10;
 		
-		if ( this._printingslot ){
-			this._printingslot=false;
-			this.show();
+		if ( this._printingslot != null){
+			this._printingslot=null;
 		}
-		
-		if ( this._flying != null ){			
-			this.show();
-			var p1=this._nodes[this._flying[0]].getPoint(this._flying[1],!this._flying[2]);
-			var p2=null;
-			if ( this._flying[2] ){
-				p2=p1;
-				p1=[e.pageX-8-2,e.pageY-8];
+
+		// flying
+		if ( this._flying != null ){						
+			this._flying = [this._flying[0],this._flying[1],this._flying[2],e.pageX,e.pageY];
+		}else{
+			// moving
+			if(this._element != null ){
+				// limite de borda
+				if (e.pageX < 0 || e.pageY < 0 || e.pageX >= this._width || e.pageY >= this._height) return;
+				// movendo coordenadas do objeto
+				this._element._x = e.pageX - this._element._relx;
+				this._element._y = e.pageY - this._element._rely;			
 			}else{
-				p2=[e.pageX-8+20,e.pageY-8];
-			}
-			this.showfio(p1,p2);			
-			return;
-		}
-		
-		if(this._element == null ){
-			for (var b = 0; b < this._nodes.length ; b++) {			
-				if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
-					var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);
-					if ( slot != null && this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0) != -1 ){
-						this.show();
-						this._nodes[b].printaslotmouse(b,slot[0],slot[1]);
-						this._printingslot=true;					
+				// analise contornos
+				for (var b = 0; b < this._nodes.length ; b++) {			
+					if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
+						var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);
+						if ( slot != null && this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0) != -1 ){
+							this.show();							
+							this._printingslot=[b,slot[0],slot[1]];												
+							break;
+						}
 					}
-				}
-			};			
-			return;
+				};							
+			}
 		}
 		
-		// limite de borda
-		if (e.pageX < 0 || e.pageY < 0 || e.pageX >= this._width || e.pageY >= this._height) return;
-		// movendo coordenadas do objeto
-		this._element._x = e.pageX - this._element._relx;
-		this._element._y = e.pageY - this._element._rely;
 		// printando o objeto se movendo		
         this.show()		
 	}
 	
 	this.mouseup_redefined = function(e){
+		if ( this._flying != null )
+			this._flying = null;
 		this._element = null;
 		this.show();
 	}
@@ -374,11 +380,14 @@ var Node = function(a) {
 	}
 
 	this.printaslots = function(){
-		var p = null;
+		var p = null;		
 		for ( var i=0;i<this._n_slots_esq;i++ )
-		{
+		{		
 			p = this.getPoint(i,false);
-			if ( this.getnumligacaobyslot(i,false,0) != -1 ){
+			if ( 
+				( this.getnumligacaobyslot(i,false,0) != -1 )
+				|| ( tela_._flying != null && tela_._flying[0] == this.getidnode() && tela_._flying[1] == i && tela_._flying[2] == true )
+			){
 				context.beginPath();			
 				context.strokeStyle = this._cor_slot;		
 				context.lineWidth = this._lineWidth*2;	
@@ -389,13 +398,18 @@ var Node = function(a) {
 				context.strokeStyle = this._cor_slot;		
 				context.lineWidth = this._lineWidth/2;	
 				context.arc(p[0], p[1], this._lineWidth*1.5, Math.PI*0.5, Math.PI*2.5);
-				context.stroke();
+				context.stroke();				
 			}
+			if ( tela_._printingslot != null && this.getidnode() == tela_._printingslot[0] && tela_._printingslot[1] == i && tela_._printingslot[2] == false )
+				this.printaslotmouse(i,false);
 		}
 		for ( var i=0;i<this._n_slots_dir;i++ )
 		{
 			p = this.getPoint(i,true);
-			if ( this.getnumligacaobyslot(i,true,0) != -1 ){
+			if ( 
+				( this.getnumligacaobyslot(i,true,0) != -1 )
+				|| ( tela_._flying != null && tela_._flying[0] == this.getidnode() && tela_._flying[1] == i && tela_._flying[2] == false )
+			){
 				context.beginPath();			
 				context.strokeStyle = this._cor_slot;		
 				context.lineWidth = this._lineWidth*2;	
@@ -408,11 +422,13 @@ var Node = function(a) {
 				context.arc(p[0], p[1], this._lineWidth*1.5, Math.PI*0.5, Math.PI*2.5);
 				context.stroke();
 			}
+			if ( tela_._printingslot != null && this.getidnode() == tela_._printingslot[0] && tela_._printingslot[1] == i && tela_._printingslot[2] == true )
+				this.printaslotmouse(i,true);
 		}
 	}
 
-	this.printaslotmouse = function(id_node,num_seq,isSender){
-		var p = tela_._nodes[id_node].getPoint(num_seq,isSender);
+	this.printaslotmouse = function(num_seq,isSender){
+		var p = this.getPoint(num_seq,isSender);
 		context.strokeStyle = '#ffffff';		
 		for ( var i=0;i<2;i+=2/8 ){
 			context.beginPath();			
@@ -497,9 +513,11 @@ window.onload = function(){
 	tela.addNode(150, 250, "dsadasdasdasd");
 	tela.addNode(650, 350, "AAA");	
 	tela.addNode(950, 200, "ffdsf");		
+	tela.addNode(950, 600, "fwfds")
 	tela.addLigacao(0,0,1,0);
 	tela.addLigacao(0,1,1,1);
 	tela.addLigacao(1,0,2,0);
+	tela.addLigacao(1,0,3,0);
 	tela.show();
 }
 
