@@ -43,7 +43,7 @@ var Tela = function(a) {
 	this._nodes = [];
 	this._ligacoes = []; // [[origem,numseq,destino,numseq]]
 	
-	this._flying = null; // 	[id,numseq,isSender,x,y]
+	this._flying = null; // 	[id,numseq,x,y]
 	this._p2_correcao_flying = null;
 	this._candidato_ligacao = null;
 	
@@ -70,8 +70,8 @@ var Tela = function(a) {
 		for (var i = 0; i < this._ligacoes.length; i++) this.showligacao(this._ligacoes[i]);		
 		
 		if ( this._flying != null ){						
-			var p1=this._nodes[this._flying[0]].getPoint(this._flying[1],!this._flying[2]);
-			var p2=[this._flying[3]-8+20,this._flying[4]-8];
+			var p1=this._nodes[this._flying[0]].getPoint(this._flying[1],true);
+			var p2=[this._flying[2]-8+20,this._flying[3]-8];
 			if ( this._p2_correcao_flying != null )				
 				p2=this._p2_correcao_flying;
 			this.showfio(p1,p2);			
@@ -91,26 +91,17 @@ var Tela = function(a) {
 			if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
 				var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);
 				// clickando em um slot ligado
-				if ( slot != null && this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0) != -1 && !slot[1]){
+				if ( slot != null && !slot[1] && this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0) != -1 ){
 					var n_ligacao = this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0);
-					var id=-1;
-					if ( !slot[1] )
-						id=this._ligacoes[n_ligacao][0];
-					else
-						id=this._ligacoes[n_ligacao][2];
-						
-					// mesmo que a consistencia de -1 ja foi feita, aqui precisamos consistir novamente por questoes de segurança, caso seja feito alguma alteração acima
-					if ( n_ligacao != -1 )
-					{
-						this._ligacoes.splice(n_ligacao,1);						
-						this._flying = [id,slot[0],slot[1],e.pageX,e.pageY];
-						this.show();
-					}								
+					var id=this._ligacoes[n_ligacao][0];
+					this._flying = [this._ligacoes[n_ligacao][0],this._ligacoes[n_ligacao][1],e.pageX,e.pageY];
+					this._ligacoes.splice(n_ligacao,1);					
+					this.show();
 				}else{			
 					// gerando nova linha
 					if ( slot != null && slot[1] )
 					{
-						this._flying = [b,slot[0],!slot[1],e.pageX-8,e.pageY-8];
+						this._flying = [b,slot[0],e.pageX-8,e.pageY-8];
 					}else{
 						this._nodes[b]._relx = e.pageX - this._nodes[b]._x;
 						this._nodes[b]._rely = e.pageY - this._nodes[b]._y;
@@ -140,7 +131,7 @@ var Tela = function(a) {
 		}else{
 			// flying
 			if ( this._flying != null ){						
-				this._flying = [this._flying[0],this._flying[1],this._flying[2],e.pageX,e.pageY];
+				this._flying = [this._flying[0],this._flying[1],e.pageX,e.pageY];
 			}
 			// analise contornos
 			for (var b = 0; b < this._nodes.length ; b++) {			
@@ -415,28 +406,37 @@ var Node = function(a) {
 
 	this.printaslots = function(){
 		var p = null;	
-		var id=null;
+		var id = this.getidnode();
 		var flag_existe_ligacoes = false;
 		var flag_flying_inicio = false;
 		var flag_mouse_SobreSlot = false;
 		var flag_isSender = false;
+		var i=0;
 		
-		for ( var i=0;i<this._n_slots_esq;i++ )
+		for ( var i_=0;i_<this._n_slots_esq+this._n_slots_dir;i_++ )
 		{		
-			p = this.getPoint(i,flag_isSender);
-			id = this.getidnode();
+			// if i_ para poder listar esq e dir com um unico for
+			if ( i_ >= this._n_slots_esq )
+			{				
+				i=i_-this._n_slots_esq;
+				flag_isSender = true;
+			}else{
+				i=i_;
+			}
+			
+			p = this.getPoint(i,flag_isSender);			
 			flag_existe_ligacoes = this.getnumligacaobyslot(i,flag_isSender,0) != -1;						
 			flag_mouse_SobreSlot = tela_._mouseSobreSlot != null && id == tela_._mouseSobreSlot[0] && tela_._mouseSobreSlot[1] == i && tela_._mouseSobreSlot[2] == flag_isSender;
 			flag_flying0_igual_id = tela_._flying != null && tela_._flying[0] == id;
-			flag_flying_inicio = tela_._flying != null && tela_._flying[0] == id && tela_._flying[1] == i && tela_._flying[2] == !flag_isSender;
-			flag_flying_fim = tela_._flying != null && !flag_flying0_igual_id && flag_mouse_SobreSlot;
+			flag_flying_inicio = tela_._flying != null && tela_._flying[0] == id && tela_._flying[1] == i && flag_isSender;
+			flag_flying_fim = tela_._flying != null && !flag_flying0_igual_id && flag_mouse_SobreSlot && !flag_isSender;
 			flag_ligacao_repetida = flag_flying_fim && tela_.existeEssaLigacao(tela_._flying[0],tela_._flying[1],id,i);
 			if ( flag_flying_fim && !flag_ligacao_repetida )
 				tela_._candidato_ligacao = [tela_._flying[0],tela_._flying[1],id,i];
 			if ( flag_flying_fim && !flag_ligacao_repetida )
 				tela_._p2_correcao_flying = this.getPoint(i,flag_isSender);
 			
-			if ( ( flag_flying_fim && !flag_isSender ) || flag_existe_ligacoes || flag_flying_inicio || (flag_mouse_SobreSlot && !flag_existe_ligacoes && flag_isSender && !flag_flying_fim ) ){
+			if ( ( flag_flying_fim && !flag_isSender ) || flag_existe_ligacoes || flag_flying_inicio || (flag_mouse_SobreSlot && !flag_existe_ligacoes && flag_isSender && tela_._flying == null ) ){
 				context.beginPath();			
 				context.strokeStyle = this._cor_slot;		
 				context.lineWidth = this._lineWidth*2;	
@@ -454,39 +454,6 @@ var Node = function(a) {
 			}
 		}
 		
-		flag_isSender = true;
-		for ( var i=0;i<this._n_slots_dir;i++ )
-		{
-			p = this.getPoint(i,flag_isSender);
-			id = this.getidnode();
-			flag_existe_ligacoes = this.getnumligacaobyslot(i,flag_isSender,0) != -1;						
-			flag_mouse_SobreSlot = tela_._mouseSobreSlot != null && id == tela_._mouseSobreSlot[0] && tela_._mouseSobreSlot[1] == i && tela_._mouseSobreSlot[2] == flag_isSender;
-			flag_flying0_igual_id = tela_._flying != null && tela_._flying[0] == id;
-			flag_flying_inicio = tela_._flying != null && tela_._flying[0] == id && tela_._flying[1] == i && tela_._flying[2] == !flag_isSender;
-			flag_flying_fim = tela_._flying != null && !flag_flying0_igual_id && flag_mouse_SobreSlot;
-			flag_ligacao_repetida = flag_flying_fim && tela_.existeEssaLigacao(tela_._flying[0],tela_._flying[1],id,i);
-			if ( flag_flying_fim && !flag_ligacao_repetida )
-				tela_._candidato_ligacao = [tela_._flying[0],tela_._flying[1],id,i];
-			if ( flag_flying_fim && !flag_ligacao_repetida )
-				tela_._p2_correcao_flying = this.getPoint(i,flag_isSender);
-			
-			if ( ( flag_flying_fim && !flag_isSender ) || flag_existe_ligacoes || flag_flying_inicio || (flag_mouse_SobreSlot && !flag_existe_ligacoes && flag_isSender && !flag_flying_fim ) ){
-				context.beginPath();			
-				context.strokeStyle = this._cor_slot;		
-				context.lineWidth = this._lineWidth*2;	
-				context.arc(p[0], p[1], this._lineWidth*0.9, Math.PI*0.5, Math.PI*2.5);
-				context.stroke();
-				// print contornos slot
-				if ( !flag_flying0_igual_id && !flag_ligacao_repetida && ( ( flag_flying_fim && !flag_isSender ) || (flag_existe_ligacoes && flag_mouse_SobreSlot && !flag_isSender ) ) )
-					this.printaslotmouse(i,flag_isSender);
-			}else{
-				context.beginPath();			
-				context.strokeStyle = this._cor_slot;		
-				context.lineWidth = this._lineWidth/2;	
-				context.arc(p[0], p[1], this._lineWidth*1.5, Math.PI*0.5, Math.PI*2.5);
-				context.stroke();				
-			}
-		}
 	}
 
 	this.printaslotmouse = function(num_seq,isSender){
@@ -576,10 +543,10 @@ window.onload = function(){
 	tela.addNode(650, 350, "AAA");	
 	tela.addNode(950, 200, "ffdsf");		
 	tela.addNode(950, 600, "fwfds")
-	tela.addLigacao(0,0,1,0);
-	tela.addLigacao(0,1,1,1);
-	tela.addLigacao(1,0,2,0);
-	tela.addLigacao(1,0,3,0);
+	tela.addLigacao(0,0,1,1);
+	//tela.addLigacao(0,1,1,1);
+	//tela.addLigacao(1,0,2,0);
+	//tela.addLigacao(1,0,3,0);
 	tela.show();
 }
 
