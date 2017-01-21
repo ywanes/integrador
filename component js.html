@@ -174,8 +174,13 @@ var Tela = function(a) {
 		if ( txt == "" )
 			txt = "new";
 		if ( e.keyCode == 13 ){		
-			if ( this._mouse.length == 2){									
-				this._nodes.push(new Node({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
+			if ( this._mouse.length == 2){	
+				if ( txt == "INICIO" )
+					this._nodes.push(new NodeInicio({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
+				else if ( txt == "FIM" )
+					this._nodes.push(new NodeFim({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
+				else
+					this._nodes.push(new Node({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
 				this.show();
 			}else{				
 				this._nodes.push(new Node({ x:this._width/2, y:this._height/2, name:txt }));		
@@ -353,6 +358,8 @@ var Node = function(a) {
 	
 	this._lineWidth = 3;
 
+	this._deslocamento_degrade = 60;
+	
 	this.linha = function(x1,y1,x2,y2){
 		context.lineWidth = this._lineWidth;
 		context.strokeStyle = this._cor_fio;	
@@ -366,7 +373,7 @@ var Node = function(a) {
 		context.beginPath();
 		
 		if ( degrade ){
-			var gradient=context.createRadialGradient(x-60,y-100,5,x-60,y-100,200);
+			var gradient=context.createRadialGradient(x-this._deslocamento_degrade,y-100,5,x-this._deslocamento_degrade,y-100,200);
 			gradient.addColorStop("0.6",cor2);
 			gradient.addColorStop("1.0",cor3);	
 			context.fillStyle = gradient;
@@ -568,14 +575,35 @@ var Node = function(a) {
 	}
 };
 
+function NodeInicio(a){
+	Node.call(this,a);
+	this._height = 45;
+	this._width = 120;
+	this._text = "INÍCIO";
+	this._n_slots_esq=0;
+	this._n_slots_dir=1;
+	this._cor_slot="#fff";
+	this._cor1="#ffffff";	// cor degrade 1     - azul	
+	this._deslocamento_degrade = 88;
+}
+NodeInicio.prototype = Object.create(Node.prototype);
 
-
-
-
+function NodeFim(a){
+	Node.call(this,a);
+	this._height = 45;
+	this._width = 120;
+	this._text = "FIM";
+	this._n_slots_esq=1;
+	this._n_slots_dir=0;
+	this._cor_slot="#fff";
+	this._cor1="#ffffff";	// cor degrade 1     - azul	
+	this._deslocamento_degrade = 88;
+}
+NodeFim.prototype = Object.create(Node.prototype);
 
 
 window.onload = function(){
-	var tela = new Tela({width: 1420, height: 790, name: "Component JS "});			
+	var tela = new Tela({width: 1420, height: 790, name: "Component JS "});				
 	tela.addNode(150, 250, "dsadasdasdasd");
 	tela.addNode(650, 350, "AAA");	
 	tela.addNode(950, 200, "ffdsf");		
