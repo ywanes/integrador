@@ -44,6 +44,7 @@ var Tela = function(a) {
 	this._ligacoes = []; // [[origem,numseq,destino,numseq]]
 	
 	this._flying = null; // 	[id,numseq,isSender,x,y]
+	this._p2_correcao_flying = null;
 	
 	// canvas context
 	var can = document.createElement("canvas");
@@ -57,23 +58,20 @@ var Tela = function(a) {
 	this._mouseSobreSlot = null;
 	
 	this.show = function() {			
+		this._p2_correcao_flying = null;
 		context.clearRect(0, 0, this._width, this._height);   // clean
 		context.fillStyle = "#222222";                        // branco		
-		context.fillRect(0, 0, this._width, this._height);	  // preenchendo fundo		
+		context.fillRect(0, 0, this._width, this._height);	  // preenchendo fundo				
 		
-		for (var i = 0; i < this._fundos.length; i++)   this._fundos[i].show()
+		for (var i = 0; i < this._fundos.length; i++)   this._fundos[i].show()		
 		for (var i = 0; i < this._nodes.length; i++)   	this._nodes[i].show()		
 		for (var i = 0; i < this._ligacoes.length; i++) this.showligacao(this._ligacoes[i]);		
 		
 		if ( this._flying != null ){						
 			var p1=this._nodes[this._flying[0]].getPoint(this._flying[1],!this._flying[2]);
-			var p2=null;
-			if ( this._flying[2] ){
-				p2=p1;
-				p1=[this._flying[3]-8-2,this._flying[4]-8];
-			}else{
-				p2=[this._flying[3]-8+20,this._flying[4]-8];
-			}
+			var p2=[this._flying[3]-8+20,this._flying[4]-8];
+			if ( this._p2_correcao_flying != null )				
+				p2=this._p2_correcao_flying;
 			this.showfio(p1,p2);			
 		}
 		
@@ -129,29 +127,29 @@ var Tela = function(a) {
 			this._mouseSobreSlot=null;
 		}
 
-		// flying
-		if ( this._flying != null ){						
-			this._flying = [this._flying[0],this._flying[1],this._flying[2],e.pageX,e.pageY];
+		
+		// moving
+		if(this._element != null ){
+			// limite de borda
+			if (e.pageX < 0 || e.pageY < 0 || e.pageX >= this._width || e.pageY >= this._height) return;
+			// movendo coordenadas do objeto
+			this._element._x = e.pageX - this._element._relx;
+			this._element._y = e.pageY - this._element._rely;			
 		}else{
-			// moving
-			if(this._element != null ){
-				// limite de borda
-				if (e.pageX < 0 || e.pageY < 0 || e.pageX >= this._width || e.pageY >= this._height) return;
-				// movendo coordenadas do objeto
-				this._element._x = e.pageX - this._element._relx;
-				this._element._y = e.pageY - this._element._rely;			
-			}else{
-				// analise contornos
-				for (var b = 0; b < this._nodes.length ; b++) {			
-					if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
-						var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);						
-						if ( slot != null ){						
-							this._mouseSobreSlot=[b,slot[0],slot[1]];												
-							break;
-						}
-					}
-				};							
+			// flying
+			if ( this._flying != null ){						
+				this._flying = [this._flying[0],this._flying[1],this._flying[2],e.pageX,e.pageY];
 			}
+			// analise contornos
+			for (var b = 0; b < this._nodes.length ; b++) {			
+				if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
+					var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);						
+					if ( slot != null ){						
+						this._mouseSobreSlot=[b,slot[0],slot[1]];												
+						break;
+					}
+				}
+			};							
 		}
 		
 		// printando o objeto se movendo		
@@ -211,6 +209,13 @@ var Tela = function(a) {
 			
 			this.showfio(p1,p2);
 		}
+	}
+	
+	this.existeEssaLigacao = function(n1,n2,n3,n4){		
+		for ( var i=0;i<this._ligacoes.length;i++ )
+			if ( this._ligacoes[i][0] == n1 && this._ligacoes[i][1] == n2 && this._ligacoes[i][2] == n3 && this._ligacoes[i][3] == n4)
+				return true;				
+		return false;
 	}
 	
 	this.addNode = function(a,b,c){
@@ -407,25 +412,29 @@ var Node = function(a) {
 	this.printaslots = function(){
 		var p = null;	
 		var flag_existe_ligacoes = false;
-		var flag_flying_this_slot = false;
+		var flag_flying_inicio = false;
 		var flag_mouse_SobreSlot = false;
 		var flag_isSender = false;
 		
 		for ( var i=0;i<this._n_slots_esq;i++ )
 		{		
 			p = this.getPoint(i,flag_isSender);
-			flag_existe_ligacoes = this.getnumligacaobyslot(i,flag_isSender,0) != -1;
-			flag_flying_this_slot = tela_._flying != null && tela_._flying[0] == this.getidnode() && tela_._flying[1] == i && tela_._flying[2] == !flag_isSender;
+			flag_existe_ligacoes = this.getnumligacaobyslot(i,flag_isSender,0) != -1;						
 			flag_mouse_SobreSlot = tela_._mouseSobreSlot != null && this.getidnode() == tela_._mouseSobreSlot[0] && tela_._mouseSobreSlot[1] == i && tela_._mouseSobreSlot[2] == flag_isSender;
+			flag_flying_inicio = tela_._flying != null && tela_._flying[0] == this.getidnode() && tela_._flying[1] == i && tela_._flying[2] == !flag_isSender;
+			flag_flying_fim = tela_._flying != null && tela_._flying[0] != this.getidnode() && flag_mouse_SobreSlot;
+			flag_ligacao_repetida = flag_flying_fim && tela_.existeEssaLigacao(tela_._flying[0],tela_._flying[1],this.getidnode(),i);
+			if ( flag_flying_fim && !flag_ligacao_repetida )
+				tela_._p2_correcao_flying = this.getPoint(i,flag_isSender);
 			
-			if ( flag_existe_ligacoes || flag_flying_this_slot || (flag_mouse_SobreSlot && !flag_existe_ligacoes && flag_isSender) ){
+			if ( ( flag_flying_fim && !flag_isSender ) || flag_existe_ligacoes || flag_flying_inicio || (flag_mouse_SobreSlot && !flag_existe_ligacoes && flag_isSender && !flag_flying_fim ) ){
 				context.beginPath();			
 				context.strokeStyle = this._cor_slot;		
 				context.lineWidth = this._lineWidth*2;	
 				context.arc(p[0], p[1], this._lineWidth*0.9, Math.PI*0.5, Math.PI*2.5);
 				context.stroke();
 				// print contornos slot
-				if ( flag_existe_ligacoes && flag_mouse_SobreSlot && !flag_isSender)
+				if ( !flag_ligacao_repetida && ( ( flag_flying_fim && !flag_isSender ) || (flag_existe_ligacoes && flag_mouse_SobreSlot && !flag_isSender ) ) )
 					this.printaslotmouse(i,flag_isSender);
 			}else{
 				context.beginPath();			
@@ -440,18 +449,22 @@ var Node = function(a) {
 		for ( var i=0;i<this._n_slots_dir;i++ )
 		{
 			p = this.getPoint(i,flag_isSender);
-			flag_existe_ligacoes = this.getnumligacaobyslot(i,flag_isSender,0) != -1;
-			flag_flying_this_slot = tela_._flying != null && tela_._flying[0] == this.getidnode() && tela_._flying[1] == i && tela_._flying[2] == !flag_isSender;
+			flag_existe_ligacoes = this.getnumligacaobyslot(i,flag_isSender,0) != -1;			
 			flag_mouse_SobreSlot = tela_._mouseSobreSlot != null && this.getidnode() == tela_._mouseSobreSlot[0] && tela_._mouseSobreSlot[1] == i && tela_._mouseSobreSlot[2] == flag_isSender;
-			
-			if ( flag_existe_ligacoes || flag_flying_this_slot || (flag_mouse_SobreSlot && !flag_existe_ligacoes && flag_isSender) ){
+			flag_flying_inicio = tela_._flying != null && tela_._flying[0] == this.getidnode() && tela_._flying[1] == i && tela_._flying[2] == !flag_isSender;			
+			flag_flying_fim = tela_._flying != null && tela_._flying[0] != this.getidnode() && flag_mouse_SobreSlot;
+			flag_ligacao_repetida = flag_flying_fim && !tela_.existeEssaLigacao(tela_._flying[0],tela_._flying[1],this.getidnode(),i);
+			if ( flag_flying_fim && !flag_ligacao_repetida )
+				tela_._p2_correcao_flying = this.getPoint(i,flag_isSender);
+
+			if ( ( flag_flying_fim && !flag_isSender ) || flag_existe_ligacoes || flag_flying_inicio || (flag_mouse_SobreSlot && !flag_existe_ligacoes && flag_isSender && !flag_flying_fim ) ){
 				context.beginPath();			
 				context.strokeStyle = this._cor_slot;		
 				context.lineWidth = this._lineWidth*2;	
 				context.arc(p[0], p[1], this._lineWidth*0.9, Math.PI*0.5, Math.PI*2.5);
 				context.stroke();
 				// print contornos slot
-				if ( flag_existe_ligacoes && flag_mouse_SobreSlot && !flag_isSender)
+				if ( !flag_ligacao_repetida && ( ( flag_flying_fim && !flag_isSender ) || (flag_existe_ligacoes && flag_mouse_SobreSlot && !flag_isSender ) ) )
 					this.printaslotmouse(i,flag_isSender);
 			}else{
 				context.beginPath();			
