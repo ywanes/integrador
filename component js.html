@@ -11,12 +11,10 @@
 		
 		<!--<div id="diagrama"  style="position: relative;" ></div> -->
 		<div style="position: relative;">
-			<div id="diagrama1" style="z-index: 0;"></div>
+			<div id="diagrama1" style="z-index: 0;" oncontextmenu="return false;"></div>
 			
-			<div id="diagrama2" style="z-index: 1;"></div>
+			<div id="diagrama2" style="z-index: 1;" oncontextmenu="return false;"></div>
 		</div>
-
-		
 	</body>	
 </html>
 
@@ -35,8 +33,12 @@ var Tela = function(a) {
     if (document.getElementById('diagrama1') == null || document.getElementById('diagrama1').nodeName != "DIV") { alert("ERROR"); console.log("DIV \"" + document.getElementById('diagrama1') + "\" nao encontrada!"); return;}
 	tela_=this;
 	
-    this._width = a.width;
-    this._height = a.height;
+    //this._width = a.width;
+	//this._height = a.height;
+	
+	this._width = screen.width*.88;		
+	this._height = screen.height*.78;    
+	
 	this._name = a.name;
 	
 	this._fundos = [];
@@ -75,8 +77,7 @@ var Tela = function(a) {
 			if ( this._p2_correcao_flying != null )				
 				p2=this._p2_correcao_flying;
 			this.showfio(p1,p2);			
-		}
-		
+		}		
 	};
 
 	// rotinas externas
@@ -84,7 +85,9 @@ var Tela = function(a) {
     this.mousemove = function(e) { tela_.mousemove_redefined(e); };
     this.mouseup =   function(e) { tela_.mouseup_redefined(e);   };	
 
+	
     this.mousedown_redefined = function(e) {
+		if ( e.button != 0 ) return;
 		var tmp=10;
         for (var b = 0; b < this._nodes.length ; b++) {						
 			// clickando no node
@@ -113,7 +116,7 @@ var Tela = function(a) {
         };
     };
 	
-	this.mousemove_redefined = function(e) {		
+	this.mousemove_redefined = function(e) {				
 		var tmp=10;
 		
 		if ( this._mouseSobreSlot != null){
@@ -150,6 +153,7 @@ var Tela = function(a) {
 	}
 	
 	this.mouseup_redefined = function(e){
+		if ( e.button != 0 ) return;
 		if ( this._candidato_ligacao != null )
 			this._ligacoes.push(this._candidato_ligacao);
 		if ( this._flying != null )
@@ -328,7 +332,6 @@ var Node = function(a) {
 		context.moveTo(100, 250);
 		context.quadraticCurveTo(300.43242, 250, 400, 500);
 		context.stroke();
-
 	}
 
 	this.printa = function(x1,y1,x2,y2,cor1,degrade,x,y,cor2,cor3) {
@@ -538,16 +541,17 @@ var Node = function(a) {
 };
 
 window.onload = function(){
-	var tela = new Tela({width: 1420, height: 790, name: "Component JS "});		
+	var tela = new Tela({width: 1420, height: 790, name: "Component JS "});			
 	tela.addNode(150, 250, "dsadasdasdasd");
 	tela.addNode(650, 350, "AAA");	
 	tela.addNode(950, 200, "ffdsf");		
 	tela.addNode(950, 600, "fwfds")
-	tela.addLigacao(0,0,1,1);
-	//tela.addLigacao(0,1,1,1);
-	//tela.addLigacao(1,0,2,0);
-	//tela.addLigacao(1,0,3,0);
+	tela.addLigacao(0,0,1,0);
+	tela.addLigacao(0,1,1,1);
+	tela.addLigacao(1,0,2,0);
+	tela.addLigacao(1,0,3,0);
 	tela.show();
 }
+
 
 </script>    
