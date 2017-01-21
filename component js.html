@@ -3,6 +3,7 @@
 <!-- saved from url=(0062)http://www.uco.es/~in1rosaj/tools/jsUML2/ejemplos/classGS.html -->
 <!-- blueprint unreal -> http://www.michalorzelek.com/blog/wp-content/uploads/2014/07/ForestGenerator_CreateGrid.png -->
 <html>
+	<meta charset="UTF-8">
 	<body bgcolor="#444444">	
 		<!-- https://www.base64-image.de/ -->
 		<!-- http://icon-icons.com/descargaimagen.php?id=50262&root=510/PNG/32/&file=ios7-gear_icon-icons.com_50262.png -->
@@ -48,6 +49,8 @@ var Tela = function(a) {
 	this._flying = null; // 	[id,numseq,x,y]
 	this._p2_correcao_flying = null;
 	this._candidato_ligacao = null;
+	this._mouse = [];
+	this._text = "";
 	
 	// canvas context
 	var can = document.createElement("canvas");
@@ -81,12 +84,13 @@ var Tela = function(a) {
 	};
 
 	// rotinas externas
-    this.mousedown = function(e) { tela_.mousedown_redefined(e); };
-    this.mousemove = function(e) { tela_.mousemove_redefined(e); };
-    this.mouseup =   function(e) { tela_.mouseup_redefined(e);   };	
-
+    this.mousedown_ = function(e) { tela_.mousedown(e); };
+    this.mousemove_ = function(e) { tela_.mousemove(e); };
+    this.mouseup_ =   function(e) { tela_.mouseup(e);   };	
+	this.keydown_ =   function(e) { tela_.keydown(e);   };
 	
-    this.mousedown_redefined = function(e) {
+	
+    this.mousedown = function(e) {
 		if ( e.button != 0 ) return;
 		var tmp=10;
         for (var b = 0; b < this._nodes.length ; b++) {						
@@ -116,9 +120,10 @@ var Tela = function(a) {
         };
     };
 	
-	this.mousemove_redefined = function(e) {				
+	this.mousemove = function(e) {				
 		var tmp=10;
 		
+		this._mouse = [e.pageX,e.pageY];
 		if ( this._mouseSobreSlot != null){
 			this._mouseSobreSlot=null;
 		}
@@ -152,7 +157,7 @@ var Tela = function(a) {
         this.show()		
 	}
 	
-	this.mouseup_redefined = function(e){
+	this.mouseup = function(e){
 		if ( e.button != 0 ) return;
 		if ( this._candidato_ligacao != null )
 			this._ligacoes.push(this._candidato_ligacao);
@@ -162,6 +167,27 @@ var Tela = function(a) {
 		this.show();
 	}
 
+	this.keydown = function(e){	
+		var txt = this._text;
+		if ( txt.length > 20 )
+			txt = txt.substring(1, 20);
+		if ( txt == "" )
+			txt = "new";
+		if ( e.keyCode == 13 ){		
+			if ( this._mouse.length == 2){									
+				this._nodes.push(new Node({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
+				this.show();
+			}else{				
+				this._nodes.push(new Node2({ x:this._width/2, y:this._height/2, name:txt }));		
+				this.show();
+			}
+			this._text = "";
+		}else{						
+			this._text += String.fromCharCode(e.keyCode);
+			
+		}
+	}
+	
 	this.showfio = function(p1,p2){
 		var tmp=95;
 		var tmp2=0;
@@ -225,10 +251,12 @@ var Tela = function(a) {
 		this._ligacoes.push([a,b,c,d]);
 	}
 
-	window.addEventListener("mousedown", this.mousedown, false);
-	window.addEventListener("mousemove", this.mousemove, false);
-	window.addEventListener("mouseup", this.mouseup, false);	
+	window.addEventListener("mousedown", this.mousedown_, false);
+	window.addEventListener("mousemove", this.mousemove_, false);
+	window.addEventListener("mouseup", this.mouseup_, false);	
+	window.addEventListener("keydown", this.keydown_, false);	
 
+	
 	this._fundos.push(new Fundo());
 };
 
@@ -539,6 +567,12 @@ var Node = function(a) {
 		return null;
 	}
 };
+
+
+
+
+
+
 
 window.onload = function(){
 	var tela = new Tela({width: 1420, height: 790, name: "Component JS "});			
