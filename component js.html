@@ -242,15 +242,40 @@ var Tela = function(a) {
 		}
 	}
 	
-	this.mousewheel = function(e){		
-		this._zoom += e.wheelDelta/12;		
-		if ( this._zoom < 10 ) this._zoom = 10;
+	this.mousewheel = function(e){				
+		var delta = e.wheelDelta/12;
+				
+		while ( (this._zoom+delta) < 10 )
+			delta+=10;
+		while ( (this._zoom+delta) > 300 )
+			delta-=10;
+		if ( delta == 0 ) return;
+
+		var antes=this._zoom;
+		var depois=this._zoom+delta;
+		
+		var razao = (antes/depois);
+		var porce = (antes-depois)/antes;
+		this._zoom += delta;		
 		
 		context.restore();
 		context.save();		
+		
 		context.scale(this._zoom/100,this._zoom/100);		
 		
-		console.log(this._zoom);
+		console.log(this._width);
+		this._eixox+=
+			(
+				(100/depois)*this._width*((100-depois)/100)
+				- (100/antes)*this._width*((100-antes)/100)
+			)*((e.pageX)/this._width);		
+		this._eixoy+=
+			(
+				(100/depois)*this._height*((100-depois)/100)
+				- (100/antes)*this._height*((100-antes)/100)
+			)*((e.pageY)/this._height);		
+		
+		
 		this.show();
 	}
 	
@@ -684,7 +709,7 @@ window.onload = function(){
 	tela.addNode(150, 250, "dsadasdasdasd");
 	tela.addNode(650, 350, "AAA");	
 	tela.addNode(950, 200, "ffdsf");		
-	tela.addNode(950, 600, "fwfds")
+	tela.addNode(1115, 630, "fwfds")
 	tela.addLigacao(0,0,1,0);
 	tela.addLigacao(0,1,1,1);
 	tela.addLigacao(1,0,2,0);
