@@ -11,10 +11,10 @@
 				
 		
 		<!--<div id="diagrama"  style="position: relative;" ></div> -->
-		<div style="position: relative;">
-			<div id="diagrama1" style="z-index: 0;" oncontextmenu="return false;"></div>
+		<div style="position: relative; overflow: hidden;">
+			<div id="diagrama1" style="z-index: 1;position: absolute; left: 0; top: 0;" oncontextmenu="return false;"></div>
 			
-			<div id="diagrama2" style="z-index: 1;" oncontextmenu="return false;"></div>
+			<div id="diagrama2" style="z-index: 0position: absolute; left: 0; top: 0;" oncontextmenu="return false;"></div>
 		</div>
 	</body>	
 </html>
@@ -52,23 +52,49 @@ var Tela = function(a) {
 	this._mouse = [];
 	this._text = "";
 	
+	this._eixox = 0;
+	this._eixoy = 0;
+	this._relx = 0;
+	this._rely = 0;
+	this._movendo_eixo = false;
+	
+	this.clickesq = 0;
+	this.clickdir = 2;
+	
 	// canvas context
 	var can = document.createElement("canvas");
     can.width = this._width;
     can.height = this._height;
-    context = can.getContext("2d");
-	document.getElementById('diagrama1').appendChild(can);
-	context.globalAlpha = .4;	
+    context = can.getContext("2d");	
+	context.globalAlpha = .4;				
+	document.getElementById('diagrama1').appendChild(can);	
+	
+	
+	// canvas context
+	var can2 = document.createElement("canvas");
+    can2.width = this._width;
+    can2.height = this._height;
+    context2 = can2.getContext("2d");	
+	context2.globalAlpha = .4;		
+	document.getElementById('diagrama2').appendChild(can2);		
 	
     this._element = null;
 	this._mouseSobreSlot = null;
 	
+	this._zoom = 100; 
+	
 	this.show = function() {			
 		this._p2_correcao_flying = null;
 		this._candidato_ligacao = null;
-		context.clearRect(0, 0, this._width, this._height);   // clean
+
+		context2.clearRect(0, 0, this._width, this._height);   // clean
+		context2.fillStyle = "#222222";                        // branco		
+		context2.fillRect(0, 0, this._width, this._height);	  // preenchendo fundo				
+		
+		
+		context.clearRect(0, 0, this._width*10, this._height*10);   // clean
 		context.fillStyle = "#222222";                        // branco		
-		context.fillRect(0, 0, this._width, this._height);	  // preenchendo fundo				
+		context.fillRect(0, 0, this._width*10, this._height*10);	  // preenchendo fundo				
 		
 		for (var i = 0; i < this._fundos.length; i++)   this._fundos[i].show()		
 		for (var i = 0; i < this._nodes.length; i++)   	this._nodes[i].show()		
@@ -84,58 +110,65 @@ var Tela = function(a) {
 	};
 
 	// rotinas externas
-    this.mousedown_ = function(e) { tela_.mousedown(e); };
-    this.mousemove_ = function(e) { tela_.mousemove(e); };
-    this.mouseup_ =   function(e) { tela_.mouseup(e);   };	
-	this.keydown_ =   function(e) { tela_.keydown(e);   };
+    this.mousedown_ =  function(e) { tela_.mousedown(e);  };
+    this.mousemove_ =  function(e) { tela_.mousemove(e);  };
+    this.mouseup_ =    function(e) { tela_.mouseup(e);    };	
+	this.keydown_ =    function(e) { tela_.keydown(e);    };
+	this.mousewheel_ = function(e) { tela_.mousewheel(e); };
 	
-	
-    this.mousedown = function(e) {
-		if ( e.button != 0 ) return;
-		var tmp=10;
-        for (var b = 0; b < this._nodes.length ; b++) {						
-			// clickando no node
-			if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
-				var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);
-				// clickando em um slot ligado
-				if ( slot != null && !slot[1] && this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0) != -1 ){
-					var n_ligacao = this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0);
-					var id=this._ligacoes[n_ligacao][0];
-					this._flying = [this._ligacoes[n_ligacao][0],this._ligacoes[n_ligacao][1],e.pageX,e.pageY];
-					this._ligacoes.splice(n_ligacao,1);					
-					this.show();
-				}else{			
-					// gerando nova linha
-					if ( slot != null && slot[1] )
-					{
-						this._flying = [b,slot[0],e.pageX-8,e.pageY-8];
-					}else{
-						this._nodes[b]._relx = e.pageX - this._nodes[b]._x;
-						this._nodes[b]._rely = e.pageY - this._nodes[b]._y;
-						this._element = this._nodes[b];
-						break;
+    this.mousedown = function(e) {		
+		if ( e.button == this.clickesq )
+		{
+			for (var b = 0; b < this._nodes.length ; b++) {						
+				// clickando no node
+				if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
+					var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);
+					// clickando em um slot ligado
+					if ( slot != null && !slot[1] && this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0) != -1 ){
+						var n_ligacao = this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0);
+						var id=this._ligacoes[n_ligacao][0];
+						this._flying = [this._ligacoes[n_ligacao][0],this._ligacoes[n_ligacao][1],e.pageX,e.pageY];
+						this._ligacoes.splice(n_ligacao,1);					
+						this.show();
+					}else{			
+						// gerando nova linha
+						if ( slot != null && slot[1] )
+						{
+							this._flying = [b,slot[0],e.pageX-8,e.pageY-8];
+						}else{
+							this._nodes[b]._relx = e.pageX - this._nodes[b].getx();
+							this._nodes[b]._rely = e.pageY - this._nodes[b].gety();
+							this._element = this._nodes[b];
+							break;
+						}
 					}
 				}
-            }
-        };
+			};
+		}
+		
+		if ( e.button == this.clickdir )
+		{
+			this._movendo_eixo = true;
+			this._relx = e.pageX - this._eixox;
+			this._rely = e.pageY - this._eixoy;			
+		}
     };
 	
 	this.mousemove = function(e) {				
-		var tmp=10;
-		
+
+	
 		this._mouse = [e.pageX,e.pageY];
 		if ( this._mouseSobreSlot != null){
 			this._mouseSobreSlot=null;
 		}
-
 		
 		// moving
 		if(this._element != null ){
 			// limite de borda
 			if (e.pageX < 0 || e.pageY < 0 || e.pageX >= this._width || e.pageY >= this._height) return;
 			// movendo coordenadas do objeto
-			this._element._x = e.pageX - this._element._relx;
-			this._element._y = e.pageY - this._element._rely;			
+			this._element.setx(e.pageX - this._element._relx);
+			this._element.sety(e.pageY - this._element._rely);
 		}else{
 			// flying
 			if ( this._flying != null ){						
@@ -152,19 +185,35 @@ var Tela = function(a) {
 				}
 			};							
 		}
-		
+			
+		if ( this._movendo_eixo )
+		{
+			this._eixox = e.pageX - this._relx;
+			this._eixoy = e.pageY - this._rely;
+		}
 		// printando o objeto se movendo		
-        this.show()		
+		this.show()		
+		
 	}
 	
 	this.mouseup = function(e){
-		if ( e.button != 0 ) return;
-		if ( this._candidato_ligacao != null )
-			this._ligacoes.push(this._candidato_ligacao);
-		if ( this._flying != null )
-			this._flying = null;
-		this._element = null;
-		this.show();
+		if ( e.button == this.clickesq ) 
+		{
+			if ( this._candidato_ligacao != null )
+				this._ligacoes.push(this._candidato_ligacao);
+			if ( this._flying != null )
+				this._flying = null;
+			this._element = null;
+			this.show();
+		}
+		if ( e.button == this.clickdir )
+		{
+			this._eixox = e.pageX - this._relx;
+			this._eixoy = e.pageY - this._rely;
+			this._relx = 0;
+			this._rely = 0;
+			this._movendo_eixo = false;
+		}
 	}
 
 	this.keydown = function(e){	
@@ -191,6 +240,18 @@ var Tela = function(a) {
 			this._text += String.fromCharCode(e.keyCode);
 			
 		}
+	}
+	
+	this.mousewheel = function(e){		
+		this._zoom += e.wheelDelta/12;		
+		if ( this._zoom < 10 ) this._zoom = 10;
+		
+		context.restore();
+		context.save();		
+		context.scale(this._zoom/100,this._zoom/100);		
+		
+		console.log(this._zoom);
+		this.show();
 	}
 	
 	this.showfio = function(p1,p2){
@@ -256,10 +317,11 @@ var Tela = function(a) {
 		this._ligacoes.push([a,b,c,d]);
 	}
 
-	window.addEventListener("mousedown", this.mousedown_, false);
-	window.addEventListener("mousemove", this.mousemove_, false);
-	window.addEventListener("mouseup", this.mouseup_, false);	
-	window.addEventListener("keydown", this.keydown_, false);	
+	window.addEventListener("mousedown", 	this.mousedown_	, false);
+	window.addEventListener("mousemove", 	this.mousemove_	, false);
+	window.addEventListener("mouseup", 		this.mouseup_	, false);	
+	window.addEventListener("keydown", 		this.keydown_	, false);	
+	window.addEventListener("mousewheel", 	this.mousewheel_, false);	
 
 	
 	this._fundos.push(new Fundo());
@@ -278,49 +340,49 @@ var Fundo = function() {
 	this.linha = function(a,b,c) {
 		var d=2;
 
-		context.beginPath();
-		context.fillStyle = "#070707";	
+		context2.beginPath();
+		context2.fillStyle = "#070707";	
 		if ( c == 0 ){
 			for ( var i=13-120;i<b;i+=120 )
 			{
-				context.moveTo(a, i);
-				context.lineTo(a+d,i);
-				context.lineTo(a+d,i+117);
-				context.lineTo(a,i+117);
-				context.lineTo(a,i);
+				context2.moveTo(a, i);
+				context2.lineTo(a+d,i);
+				context2.lineTo(a+d,i+117);
+				context2.lineTo(a,i+117);
+				context2.lineTo(a,i);
 			}
 		}else{
-			context.moveTo(0, a);
-			context.lineTo(0,a+d);
-			context.lineTo(b,a+d);
-			context.lineTo(b,a);
-			context.lineTo(0,a);
+			context2.moveTo(0, a);
+			context2.lineTo(0,a+d);
+			context2.lineTo(b,a+d);
+			context2.lineTo(b,a);
+			context2.lineTo(0,a);
 		}
 		
-		context.fill();	
+		context2.fill();	
 	}
 
 	this.cubo = function(a,b) {
 		a+=3-120;
 		tmp=14;
-		context.beginPath();
-		context.fillStyle = "#222222";	
+		context2.beginPath();
+		context2.fillStyle = "#222222";	
 		for ( var i=13-120;i<b;i+=120 )
 		{
 			for ( var j=0;j<8;j++ )
 			{
 				for ( var k=0;k<8;k++ )
 				{
-					context.moveTo(a+j*15, i+k*15);
-					context.lineTo(a+tmp+j*15,i+k*15);
-					context.lineTo(a+tmp+j*15,i+tmp+k*15);
-					context.lineTo(a+j*15,i+tmp+k*15);
-					context.lineTo(a+j*15,i+k*15);
+					context2.moveTo(a+j*15, i+k*15);
+					context2.lineTo(a+tmp+j*15,i+k*15);
+					context2.lineTo(a+tmp+j*15,i+tmp+k*15);
+					context2.lineTo(a+j*15,i+tmp+k*15);
+					context2.lineTo(a+j*15,i+k*15);
 				}
 			}
 		}
 		
-		context.fill();	
+		context2.fill();	
 		
 	}
 };
@@ -329,9 +391,6 @@ var Fundo = function() {
 var Node = function(a) {	
 	this._linha = 10;	
 	this._fresta = 10;
-	
-    this._x = a.x;
-    this._y = a.y;
 	
 	this._height = 70;
 	this._width = 150;
@@ -359,6 +418,25 @@ var Node = function(a) {
 	this._lineWidth = 3;
 
 	this._deslocamento_degrade = 60;
+
+	this._campoVisaoSlot = 10;
+	
+    //thi_s._x = a.x;
+    //thi_s._y = a.y;
+	var x = a.x;
+	var y = a.y;
+	this.getx = function() {
+		return x+tela_._eixox;
+	}
+	this.gety = function() {
+		return y+tela_._eixoy;
+	}
+	this.setx=  function(a){
+		x=a-tela_._eixox;
+	}
+	this.sety = function(a){
+		y=a-tela_._eixoy;
+	}
 	
 	this.linha = function(x1,y1,x2,y2){
 		context.lineWidth = this._lineWidth;
@@ -408,8 +486,8 @@ var Node = function(a) {
 
 	this.getPoint = function(n_slot,isSender){		
 		if ( isSender )
-			return [this._x+this._width-this._linha*2,this._y+this._fresta+this._linha+this._espaco_entre_slots/2+n_slot*this._espaco_entre_slots];
-		return [this._x+this._linha*2,this._y+this._fresta+this._linha+this._espaco_entre_slots/2+n_slot*this._espaco_entre_slots];
+			return [this.getx()+this._width-this._linha*2,this.gety()+this._fresta+this._linha+this._espaco_entre_slots/2+n_slot*this._espaco_entre_slots];
+		return [this.getx()+this._linha*2,this.gety()+this._fresta+this._linha+this._espaco_entre_slots/2+n_slot*this._espaco_entre_slots];
 	}
 
 	this.getnumligacaobyslot = function(numseq,isSender,requestid){
@@ -509,8 +587,8 @@ var Node = function(a) {
 		var linha= this._linha;	
 		var fresta = this._fresta;	
 		
-		var x = this._x+linha;	
-		var y = this._y+fresta+linha;
+		var x = this.getx()+linha;	
+		var y = this.gety()+fresta+linha;
 
 		var width = this._width-linha*2;
 		var height = this._height-fresta-linha*2;
@@ -554,20 +632,19 @@ var Node = function(a) {
 	};	
 	
 	this.inside = function(x,y){
-		return x >= this._x && x <= this._x + this._width && y >= this._y && y <= this._y + this._height;			
+		return x >= this.getx() && x <= this.getx() + this._width && y >= this.gety() && y <= this.gety() + this._height;			
 	}
 	
 	this.insideSlot = function(x,y){
-		var tmp=10;
 		for ( var c=0;c<this._n_slots_esq;c++ ){
 			var p = this.getPoint(c,false);
-			if ( x >= p[0]-tmp && x <= p[0]+tmp && y >= p[1]-tmp && y <= p[1]+tmp ){							
+			if ( x >= p[0]-this._campoVisaoSlot && x <= p[0]+this._campoVisaoSlot && y >= p[1]-this._campoVisaoSlot && y <= p[1]+this._campoVisaoSlot ){							
 				return [c,false];
 			}
 		}
 		for ( var c=0;c<this._n_slots_dir;c++ ){
 			var p = this.getPoint(c,true);
-			if ( x >= p[0]-tmp && x <= p[0]+tmp && y >= p[1]-tmp && y <= p[1]+tmp ){
+			if ( x >= p[0]-this._campoVisaoSlot && x <= p[0]+this._campoVisaoSlot && y >= p[1]-this._campoVisaoSlot && y <= p[1]+this._campoVisaoSlot ){
 				return [c,true];
 			}						
 		}		
