@@ -81,7 +81,7 @@ var Tela = function(a) {
     this._element = null;
 	this._mouseSobreSlot = null;
 	
-	this._zoom = 100; 
+	this._zoom = 100; 	
 	
 	this.show = function() {			
 		this._p2_correcao_flying = null;
@@ -90,11 +90,10 @@ var Tela = function(a) {
 		context2.clearRect(0, 0, this._width, this._height);   // clean
 		context2.fillStyle = "#222222";                        // branco		
 		context2.fillRect(0, 0, this._width, this._height);	  // preenchendo fundo				
-		
-		
-		context.clearRect(0, 0, this._width*10, this._height*10);   // clean
+
+		context.clearRect(0, 0, this._width*20, this._height*20);   // clean
 		context.fillStyle = "#222222";                        // branco		
-		context.fillRect(0, 0, this._width*10, this._height*10);	  // preenchendo fundo				
+		context.fillRect(0, 0, this._width*20, this._height*20);	  // preenchendo fundo				
 		
 		for (var i = 0; i < this._fundos.length; i++)   this._fundos[i].show()		
 		for (var i = 0; i < this._nodes.length; i++)   	this._nodes[i].show()		
@@ -117,27 +116,30 @@ var Tela = function(a) {
 	this.mousewheel_ = function(e) { tela_.mousewheel(e); };
 	
     this.mousedown = function(e) {		
+		var px = (e.pageX-8)*(100/this._zoom)+8;
+		var py = (e.pageY-8)*(100/this._zoom)+8;
+	
 		if ( e.button == this.clickesq )
 		{
 			for (var b = 0; b < this._nodes.length ; b++) {						
 				// clickando no node
-				if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
-					var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);
+				if ( this._nodes[b].inside(px-8,py-8) ){
+					var slot = this._nodes[b].insideSlot(px-8,py-8);
 					// clickando em um slot ligado
 					if ( slot != null && !slot[1] && this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0) != -1 ){
 						var n_ligacao = this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0);
 						var id=this._ligacoes[n_ligacao][0];
-						this._flying = [this._ligacoes[n_ligacao][0],this._ligacoes[n_ligacao][1],e.pageX,e.pageY];
+						this._flying = [this._ligacoes[n_ligacao][0],this._ligacoes[n_ligacao][1],px,py];
 						this._ligacoes.splice(n_ligacao,1);					
 						this.show();
 					}else{			
 						// gerando nova linha
 						if ( slot != null && slot[1] )
 						{
-							this._flying = [b,slot[0],e.pageX-8,e.pageY-8];
+							this._flying = [b,slot[0],px-8,py-8];
 						}else{
-							this._nodes[b]._relx = e.pageX - this._nodes[b].getx();
-							this._nodes[b]._rely = e.pageY - this._nodes[b].gety();
+							this._nodes[b]._relx = px - this._nodes[b].getx();
+							this._nodes[b]._rely = py - this._nodes[b].gety();
 							this._element = this._nodes[b];
 							break;
 						}
@@ -149,15 +151,18 @@ var Tela = function(a) {
 		if ( e.button == this.clickdir )
 		{
 			this._movendo_eixo = true;
-			this._relx = e.pageX - this._eixox;
-			this._rely = e.pageY - this._eixoy;			
+			this._relx = px - this._eixox;
+			this._rely = py - this._eixoy;			
 		}
     };
 	
 	this.mousemove = function(e) {				
-
+		var px = (e.pageX-8)*(100/this._zoom)+8;
+		var py = (e.pageY-8)*(100/this._zoom)+8;
 	
-		this._mouse = [e.pageX,e.pageY];
+		this._mouse = [px,py];
+		//this._mouse = [e.pageX,e.pageY];
+		
 		if ( this._mouseSobreSlot != null){
 			this._mouseSobreSlot=null;
 		}
@@ -167,17 +172,17 @@ var Tela = function(a) {
 			// limite de borda
 			if (e.pageX < 0 || e.pageY < 0 || e.pageX >= this._width || e.pageY >= this._height) return;
 			// movendo coordenadas do objeto
-			this._element.setx(e.pageX - this._element._relx);
-			this._element.sety(e.pageY - this._element._rely);
+			this._element.setx(px - this._element._relx);
+			this._element.sety(py - this._element._rely);
 		}else{
 			// flying
 			if ( this._flying != null ){						
-				this._flying = [this._flying[0],this._flying[1],e.pageX,e.pageY];
+				this._flying = [this._flying[0],this._flying[1],px,py];
 			}
 			// analise contornos
 			for (var b = 0; b < this._nodes.length ; b++) {			
-				if ( this._nodes[b].inside(e.pageX-8,e.pageY-8) ){
-					var slot = this._nodes[b].insideSlot(e.pageX-8,e.pageY-8);						
+				if ( this._nodes[b].inside(px-8,py-8) ){
+					var slot = this._nodes[b].insideSlot(px-8,py-8);						
 					if ( slot != null ){						
 						this._mouseSobreSlot=[b,slot[0],slot[1]];												
 						break;
@@ -188,8 +193,8 @@ var Tela = function(a) {
 			
 		if ( this._movendo_eixo )
 		{
-			this._eixox = e.pageX - this._relx;
-			this._eixoy = e.pageY - this._rely;
+			this._eixox = px - this._relx;
+			this._eixoy = py - this._rely;
 		}
 		// printando o objeto se movendo		
 		this.show()		
@@ -197,6 +202,9 @@ var Tela = function(a) {
 	}
 	
 	this.mouseup = function(e){
+		var px = (e.pageX-8)*(100/this._zoom)+8;
+		var py = (e.pageY-8)*(100/this._zoom)+8;
+	
 		if ( e.button == this.clickesq ) 
 		{
 			if ( this._candidato_ligacao != null )
@@ -208,8 +216,8 @@ var Tela = function(a) {
 		}
 		if ( e.button == this.clickdir )
 		{
-			this._eixox = e.pageX - this._relx;
-			this._eixoy = e.pageY - this._rely;
+			this._eixox = px - this._relx;
+			this._eixoy = py - this._rely;
 			this._relx = 0;
 			this._rely = 0;
 			this._movendo_eixo = false;
@@ -243,12 +251,12 @@ var Tela = function(a) {
 	}
 	
 	this.mousewheel = function(e){				
-		var delta = e.wheelDelta/12;
+		var delta = e.wheelDelta/24;
 				
-		while ( (this._zoom+delta) < 10 )
-			delta+=10;
-		while ( (this._zoom+delta) > 300 )
-			delta-=10;
+		while ( (this._zoom+delta) < 5 )
+			delta+=5;
+		while ( (this._zoom+delta) > 500 )
+			delta-=5;
 		if ( delta == 0 ) return;
 
 		var antes=this._zoom;
@@ -259,11 +267,9 @@ var Tela = function(a) {
 		this._zoom += delta;		
 		
 		context.restore();
-		context.save();		
-		
+		context.save();				
 		context.scale(this._zoom/100,this._zoom/100);		
-		
-		console.log(this._width);
+				
 		this._eixox+=
 			(
 				(100/depois)*this._width*((100-depois)/100)
@@ -341,13 +347,12 @@ var Tela = function(a) {
 	this.addLigacao = function(a,b,c,d){
 		this._ligacoes.push([a,b,c,d]);
 	}
-
+	
 	window.addEventListener("mousedown", 	this.mousedown_	, false);
 	window.addEventListener("mousemove", 	this.mousemove_	, false);
 	window.addEventListener("mouseup", 		this.mouseup_	, false);	
 	window.addEventListener("keydown", 		this.keydown_	, false);	
 	window.addEventListener("mousewheel", 	this.mousewheel_, false);	
-
 	
 	this._fundos.push(new Fundo());
 };
@@ -446,10 +451,8 @@ var Node = function(a) {
 
 	this._campoVisaoSlot = 10;
 	
-    //thi_s._x = a.x;
-    //thi_s._y = a.y;
-	var x = a.x;
-	var y = a.y;
+	var x = 0;
+	var y = 0;
 	this.getx = function() {
 		return x+tela_._eixox;
 	}
@@ -462,6 +465,8 @@ var Node = function(a) {
 	this.sety = function(a){
 		y=a-tela_._eixoy;
 	}
+	this.setx(a.x);
+	this.sety(a.y);	
 	
 	this.linha = function(x1,y1,x2,y2){
 		context.lineWidth = this._lineWidth;
@@ -581,7 +586,7 @@ var Node = function(a) {
 				context.beginPath();			
 				context.strokeStyle = this._cor_slot;		
 				context.lineWidth = this._lineWidth*2;	
-				context.arc(p[0], p[1], this._lineWidth*0.9, Math.PI*0.5, Math.PI*2.5);
+				context.arc(p[0], p[1], this._lineWidth, Math.PI*0.5, Math.PI*2.5);
 				context.stroke();
 				// print contornos slot
 				if ( !flag_flying0_igual_id && !flag_ligacao_repetida && ( ( flag_flying_fim && !flag_isSender ) || (flag_existe_ligacoes && flag_mouse_SobreSlot && !flag_isSender ) ) )
@@ -705,17 +710,17 @@ NodeFim.prototype = Object.create(Node.prototype);
 
 
 window.onload = function(){
-	var tela = new Tela({width: 1420, height: 790, name: "Component JS "});				
-	tela.addNode(150, 250, "dsadasdasdasd");
+	var tela = new Tela({width: 1420, height: 790, name: "Component JS " });				
+	tela.addNode(100, 100, "dsadasdasdasd");
 	tela.addNode(650, 350, "AAA");	
 	tela.addNode(950, 200, "ffdsf");		
-	tela.addNode(1115, 630, "fwfds")
+	tela.addNode(950, 530, "fwfds")
 	tela.addLigacao(0,0,1,0);
 	tela.addLigacao(0,1,1,1);
 	tela.addLigacao(1,0,2,0);
 	tela.addLigacao(1,0,3,0);
 	tela.show();
+	
 }
-
 
 </script>    
