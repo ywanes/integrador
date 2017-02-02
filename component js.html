@@ -259,6 +259,13 @@ var Tela = function(a) {
 	
 	this.mousewheel = function(e){				
 		var delta = e.wheelDelta/24;
+		if ( this._zoom >= 100 ){
+			delta*=2;
+		}else{
+			if ( this._zoom >= 200 ){
+				delta*=3;
+			}
+		}
 				
 		while ( (this._zoom+delta) < 5 )
 			delta+=5;
