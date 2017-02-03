@@ -241,6 +241,9 @@ var Tela = function(a) {
 					case "JUNCAO":
 						this._nodes.push(new NodeJuncao({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
 						break;
+					case "J":
+						this._nodes.push(new NodeJuncao({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
+						break;
 					default:
 						this._nodes.push(new Node({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
 				}
@@ -729,8 +732,8 @@ function NodeJuncao(a){
 	this._text = a.name;
 	this._n_slots_esq=1;
 	this._n_slots_dir=1;
-	this._cor_slot="#fff";
-	this._cor1="#ffffff";	// cor degrade 1     - azul	
+	//this._cor_slot="#fff";
+	//this._cor1="#ffffff";	// cor degrade 1     - azul	
 	this._deslocamento_degrade = 88;
 	
 	this.show = function() {	
