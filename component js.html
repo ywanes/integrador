@@ -100,10 +100,10 @@ var Tela = function(a) {
 		
 		if ( this._flying != null ){						
 			var p1=this._nodes[this._flying[0]].getPoint(this._flying[1],true);
-			var p2=[this._flying[2]-8+20,this._flying[3]-8];
+			var p2=[this._flying[2]-8,this._flying[3]-8];
 			if ( this._p2_correcao_flying != null )				
 				p2=this._p2_correcao_flying;
-			this.showfio(p1,p2);			
+			this.showfio(p1,p2,0);			
 		}		
 	};
 
@@ -231,23 +231,7 @@ var Tela = function(a) {
 			txt = "new";
 		if ( e.keyCode == 13 ){		
 			if ( this._mouse.length == 2){	
-				switch(txt) {
-					case "INICIO":
-						this._nodes.push(new NodeInicio({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
-						break;
-					case "FIM":
-						this._nodes.push(new NodeFim({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
-						break;
-					case "JUNCAO":
-						this._nodes.push(new NodeJuncao({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
-						break;
-					case "J":
-						this._nodes.push(new NodeJuncao({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
-						break;
-					default:
-						this._nodes.push(new Node({ x:this._mouse[0]-85, y:this._mouse[1]-27, name:txt }));		
-				}
-					
+				this.addNode(this._mouse[0]-85,this._mouse[1]-27,txt)
 				this.show();
 			}else{				
 				this._nodes.push(new Node({ x:this._width/2, y:this._height/2, name:txt }));		
@@ -302,7 +286,7 @@ var Tela = function(a) {
 		this.show();
 	}
 	
-	this.showfio = function(p1,p2){
+	this.showfio = function(p1,p2,recuo){
 		var tmp=95;
 		var tmp2=0;
 		var tmp3=0;
@@ -325,7 +309,7 @@ var Tela = function(a) {
 
 		// deslocando a posição de slot para ponta do fio		
 		p1[0]+=5.5;
-		p2[0]-=20;			
+		p2[0]+=recuo;			
 		
 		context.lineWidth = 3;
 		context.strokeStyle = "#509090";	
@@ -343,10 +327,11 @@ var Tela = function(a) {
 		// info contem,    num node, pos, num node, pos
 		if ( info[0] <= this._nodes.length && info[2] <= this._nodes.length && info[1] < this._nodes[info[0]]._n_slots_dir && info[3] < this._nodes[info[2]]._n_slots_esq )
 		{
-			var p1 = this._nodes[info[0]].getPoint(info[1],true);
-			var p2 = this._nodes[info[2]].getPoint(info[3],false);
-			
-			this.showfio(p1,p2);
+			this.showfio(
+				this._nodes[info[0]].getPoint(info[1],true)
+				,this._nodes[info[2]].getPoint(info[3],false)
+				,this._nodes[info[2]]._recuoEngate
+			);
 		}
 	}
 	
@@ -357,8 +342,25 @@ var Tela = function(a) {
 		return false;
 	}
 	
-	this.addNode = function(a,b,c){
-		this._nodes.push(new Node({ x:a, y:b, name:c }));
+	this.addNode = function(a,b,c){		
+		var c_ = c.trim();
+		switch(c_) {
+			case "INICIO":
+				this._nodes.push(new NodeInicio({ x:a, y:b, name:c_ }));		
+				break;
+			case "FIM":
+				this._nodes.push(new NodeFim({ x:a, y:b, name:c_ }));		
+				break;
+			case "JUNCAO":
+				this._nodes.push(new NodeJuncao({ x:a, y:b, name:c_ }));		
+				break;
+			case "J":
+				this._nodes.push(new NodeJuncao({ x:a, y:b, name:c_ }));		
+				break;
+			default:
+				this._nodes.push(new Node({ x:a, y:b, name:c_ }));		
+		}
+		
 	}
 
 	this.addLigacao = function(a,b,c,d){
@@ -439,8 +441,8 @@ var Node = function(a) {
 	this._linha = 10;	
 	this._fresta = 10;
 	
-	this._height = 70;
 	this._width = 150;
+	this._height = 70;	
 	
 	this._text = a.name;
 	
@@ -467,6 +469,7 @@ var Node = function(a) {
 	this._deslocamento_degrade = 60;
 
 	this._campoVisaoSlot = 10;
+	this._recuoEngate = -20;
 	
 	var x = 0;
 	var y = 0;
@@ -484,33 +487,29 @@ var Node = function(a) {
 	}
 	this.setx(a.x);
 	this.sety(a.y);	
-	
-	this.linha = function(x1,y1,x2,y2){
-		context.lineWidth = this._lineWidth;
-		context.strokeStyle = this._cor_fio;	
-		context.beginPath();
-		context.moveTo(100, 250);
-		context.quadraticCurveTo(300.43242, 250, 400, 500);
-		context.stroke();
-	}
 
-	this.printa = function(x1,y1,x2,y2,cor1,degrade,x,y,cor2,cor3) {
+	this.printa4pontos = function(x1, y1, x2, y2, x3, y3, x4, y4, cor){
+		context.beginPath();			
+		context.moveTo(x1, y1);
+		context.lineTo(x2, y2);
+		context.lineTo(x3, y3);
+		context.lineTo(x4, y4);
+		context.fillStyle = cor;	
+		context.fill();	
+	}
+	
+	this.printa = function(x1, y1, x2, y2, cor){
+		this.printa4pontos(x1, y1, x2, y1, x2, y2, x1, y2, cor);
+	}
+	
+	
+	this.printadegrade = function(x1,y1,x2,y2,cor1,x,y,cor2,cor3) {
+		var gradient=context.createRadialGradient(x-this._deslocamento_degrade,y-100,5,x-this._deslocamento_degrade,y-100,200);
 		context.beginPath();
-		
-		if ( degrade ){
-			var gradient=context.createRadialGradient(x-this._deslocamento_degrade,y-100,5,x-this._deslocamento_degrade,y-100,200);
-			gradient.addColorStop("0.6",cor2);
-			gradient.addColorStop("1.0",cor3);	
-			context.fillStyle = gradient;
-			context.fillRect(x1,y1,x2-x1,y2-y1);
-		}else{
-			context.moveTo(x1, y1);
-			context.lineTo(x2, y1);
-			context.lineTo(x2, y2);
-			context.lineTo(x1, y2);
-			context.fillStyle = cor1;	
-		}
-		
+		gradient.addColorStop("0.6",cor2);
+		gradient.addColorStop("1.0",cor3);	
+		context.fillStyle = gradient;
+		context.fillRect(x1,y1,x2-x1,y2-y1);
 		context.fill();	
 	}
 
@@ -567,6 +566,23 @@ var Node = function(a) {
 		return -1;
 	}
 
+	this.printContorno = function(){
+		var x = this.getx();
+		var y = this.gety();	
+		this.printa(x,y,x+this._width,y+1,this.cor3_);
+		this.printa(x,y+this._height,x+this._width,y+this._height+1,this.cor3_);
+		this.printa(x,y,x+1,y+this._height,this.cor3_);
+		this.printa(x+this._width,y,x+this._width+1,y+this._height,this.cor3_);
+	}
+	
+	this.printacirculo = function(x,y,len1,len2,cor){
+		context.beginPath();			
+		context.strokeStyle = cor;		
+		context.lineWidth = len1;	
+		context.arc(x, y, len2, Math.PI*0.5, Math.PI*2.5);
+		context.stroke();	
+	}
+	
 	this.printaslots = function(){
 		var p = null;	
 		var id = this.getidnode();
@@ -596,27 +612,21 @@ var Node = function(a) {
 			flag_ligacao_repetida = flag_flying_fim && tela_.existeEssaLigacao(tela_._flying[0],tela_._flying[1],id,i);
 			if ( flag_flying_fim && !flag_ligacao_repetida )
 				tela_._candidato_ligacao = [tela_._flying[0],tela_._flying[1],id,i];
-			if ( flag_flying_fim && !flag_ligacao_repetida )
+			if ( flag_flying_fim && !flag_ligacao_repetida ){
 				tela_._p2_correcao_flying = this.getPoint(i,flag_isSender);
+				tela_._p2_correcao_flying[0]+=this._recuoEngate;
+			}
 			
 			if ( ( flag_flying_fim && !flag_isSender ) || flag_existe_ligacoes || flag_flying_inicio || (flag_mouse_SobreSlot && !flag_existe_ligacoes && flag_isSender && tela_._flying == null ) ){
-				context.beginPath();			
-				context.strokeStyle = this._cor_slot;		
-				context.lineWidth = this._lineWidth*2;	
-				context.arc(p[0], p[1], this._lineWidth, Math.PI*0.5, Math.PI*2.5);
-				context.stroke();
+				this.printacirculo(p[0], p[1], this._lineWidth*2, this._lineWidth, this._cor_slot);
 				// print contornos slot
 				if ( !flag_flying0_igual_id && !flag_ligacao_repetida && ( ( flag_flying_fim && !flag_isSender ) || (flag_existe_ligacoes && flag_mouse_SobreSlot && !flag_isSender ) ) )
 					this.printaslotmouse(i,flag_isSender);
 			}else{
-				context.beginPath();			
-				context.strokeStyle = this._cor_slot;		
-				context.lineWidth = this._lineWidth/2;	
-				context.arc(p[0], p[1], this._lineWidth*1.5, Math.PI*0.5, Math.PI*2.5);
-				context.stroke();				
+				this.printacirculo(p[0], p[1], this._lineWidth/2, this._lineWidth*1.5, this._cor_slot);
 			}
 		}
-		
+		//this.printContorno();
 	}
 
 	this.printaslotmouse = function(num_seq,isSender){
@@ -649,28 +659,28 @@ var Node = function(a) {
 		var cor3=this._cor3;	// cor preenchimento - preto
 		
 		// mostra x,y
-		//this.printa(x,y,x+3.5,y+3.5,'#ffff00',false,x,y,cor2,cor3);	
+		//this.printa(x,y,x+3.5,y+3.5,'#ffff00');	
 
 		// contornos superiores
 		this.printaborda(x,y-fresta,linha,1,cor1);	
 		this.printaborda(x+width,y-fresta,linha,2,cor2);	
 		// linha entre os contornos
 
-		this.printa(x,y-linha-fresta,x+width,y-fresta,cor3,true,x,y,cor1,cor2);	
+		this.printadegrade(x,y-linha-fresta,x+width,y-fresta,cor3,x,y,cor1,cor2);	
 
 		// completando a fresta superior
-		this.printa(x-linha,y-fresta,x+width+linha, y,cor3,true,x,y,cor1,cor2);
+		this.printadegrade(x-linha,y-fresta,x+width+linha, y,cor3,x,y,cor1,cor2);
 		
 		// contornos inferiores
 		this.printaborda(x+width, y+height, linha,3,cor3);
 		this.printaborda(x, y+height, linha,4,cor3);
 		// 3 linhas restantes
-		this.printa(x-linha,y,x,y+height,cor3,false,x,y);
-		this.printa(x+width,y,x+width+linha,y+height,cor3,false,x,y,cor1,cor2);
-		this.printa(x,y+height,x+width,y+height+linha,cor3,false,x,y,cor1,cor2);
+		this.printa(x-linha,y,x,y+height,cor3);
+		this.printa(x+width,y,x+width+linha,y+height,cor3);
+		this.printa(x,y+height,x+width,y+height+linha,cor3);
 
 		// preenchendo do objeto
-		this.printa(x,y,x+width, y+height,cor3,false,x,y,cor1,cor2);
+		this.printa(x,y,x+width, y+height,cor3);
 		
 		// preenchendo nome objeto
 		this.printatexto(x,y,this._text,cor_fonte_txt,fonte_txt,px_fonte_txt);
@@ -727,21 +737,28 @@ NodeFim.prototype = Object.create(Node.prototype);
 
 function NodeJuncao(a){
 	Node.call(this,a);
-	this._height = 45;
-	this._width = 120;
-	this._text = a.name;
+	this._height = 35;
+	this._width = 60;
+	//this._text = a.name;
 	this._n_slots_esq=1;
 	this._n_slots_dir=1;
 	//this._cor_slot="#fff";
 	//this._cor1="#ffffff";	// cor degrade 1     - azul	
 	this._deslocamento_degrade = 88;
+	this._recuoEngate = -6;
+	
+	this.getPoint = function(n_slot,isSender){		
+		if ( isSender )
+			return [this.getx()+this._width-this._linha*2+15,this.gety()+this._fresta+this._linha+this._espaco_entre_slots/2+n_slot*this._espaco_entre_slots-14];
+		return [this.getx()+this._linha*2-14,this.gety()+this._fresta+this._linha+this._espaco_entre_slots/2+n_slot*this._espaco_entre_slots-14];
+	}
 	
 	this.show = function() {	
 		var linha= this._linha;	
 		var fresta = this._fresta;	
 		
-		var x = this.getx()+linha;	
-		var y = this.gety()+fresta+linha;
+		var x = this.getx()-18;	
+		var y = this.gety()+15;
 
 		var width = this._width-linha*2;
 		var height = this._height-fresta-linha*2;
@@ -753,33 +770,25 @@ function NodeJuncao(a){
 		var cor1=this._cor1; 	// cor degrade 1     - azul
 		var cor2=this._cor2;	// cor degrade 2     - cinza
 		var cor3=this._cor3;	// cor preenchimento - preto
+
+		this.printacirculo(x+50, y+3, 16, 8, '#000000');
 		
-		// mostra x,y
-		//this.printa(x,y,x+3.5,y+3.5,'#ffff00',false,x,y,cor2,cor3);	
-
-		// contornos superiores
-		this.printaborda(x,y-fresta,linha,1,cor1);	
-		this.printaborda(x+width,y-fresta,linha,2,cor2);	
-		// linha entre os contornos
-
-		this.printa(x,y-linha-fresta,x+width,y-fresta,cor3,true,x,y,cor1,cor2);	
-
-		// completando a fresta superior
-		this.printa(x-linha,y-fresta,x+width+linha, y,cor3,true,x,y,cor1,cor2);
-		
-		// contornos inferiores
-		this.printaborda(x+width, y+height, linha,3,cor3);
-		this.printaborda(x, y+height, linha,4,cor3);
-		// 3 linhas restantes
-		this.printa(x-linha,y,x,y+height,cor3,false,x,y);
-		this.printa(x+width,y,x+width+linha,y+height,cor3,false,x,y,cor1,cor2);
-		this.printa(x,y+height,x+width,y+height+linha,cor3,false,x,y,cor1,cor2);
-
-		// preenchendo do objeto
-		this.printa(x,y,x+width, y+height,cor3,false,x,y,cor1,cor2);
-		
-		// preenchendo nome objeto
-		this.printatexto(x,y,this._text,cor_fonte_txt,fonte_txt,px_fonte_txt);
+		context.beginPath();			
+		context.moveTo(x+25+4, y-2-4);
+		context.lineTo(x+25+10, y-2);
+		context.lineTo(x+25+6, y-1);
+		context.lineTo(x+25+6, y);
+		context.lineTo(x+25+6, y+1);
+		context.lineTo(x+25+6, y+2);
+		context.lineTo(x+25+6, y+3);
+		context.lineTo(x+25+6, y+4);
+		context.lineTo(x+25+6, y+5);
+		context.lineTo(x+25+6, y+6);
+		context.lineTo(x+25+6, y+7);
+		context.lineTo(x+25+10, y+8);
+		context.lineTo(x+25+4, y+8+4);
+		context.fillStyle = '#000000';	
+		context.fill();	
 		
 		this.printaslots();
 	};
@@ -795,7 +804,7 @@ window.onload = function(){
 	tela.addNode(950, 200, "ffdsf");		
 	tela.addNode(950, 530, "fwfds")
 	tela.addLigacao(0,0,1,0);
-	tela.addLigacao(0,1,1,1);
+	//tela.addLigacao(0,0,1,1);
 	tela.addLigacao(1,0,2,0);
 	tela.addLigacao(1,0,3,0);
 	tela.show();
