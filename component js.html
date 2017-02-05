@@ -49,6 +49,7 @@ var Tela = function(a) {
 	this._p2_correcao_flying = null;
 	this._candidato_ligacao = null;
 	this._mouse = [];
+	this._mouse_ = [];
 	this._text = "";
 	
 	this._eixox = 0;
@@ -58,6 +59,7 @@ var Tela = function(a) {
 	this._movendo_eixo = false;
 	
 	this.clickesq = 0;
+	this.clickscroll = 1;
 	this.clickdir = 2;
 	
 	// canvas context
@@ -118,6 +120,7 @@ var Tela = function(a) {
 		var px = (e.pageX-8)*(100/this._zoom)+8;
 		var py = (e.pageY-8)*(100/this._zoom)+8;
 	
+		
 		if ( e.button == this.clickesq )
 		{
 			for (var b = 0; b < this._nodes.length ; b++) {						
@@ -147,6 +150,11 @@ var Tela = function(a) {
 			};
 		}
 		
+		if ( e.button == this.clickscroll && tela_._mouse_.length == 2 )	
+		{		
+			this.changezoom(100-this._zoom,tela_._mouse_[0],tela_._mouse_[1]);
+		}
+		
 		if ( e.button == this.clickdir )
 		{
 			this._movendo_eixo = true;
@@ -160,7 +168,7 @@ var Tela = function(a) {
 		var py = (e.pageY-8)*(100/this._zoom)+8;
 	
 		this._mouse = [px,py];
-		//this._mouse = [e.pageX,e.pageY];
+		this._mouse_ = [e.pageX,e.pageY];
 		
 		if ( this._mouseSobreSlot != null){
 			this._mouseSobreSlot=null;
@@ -243,7 +251,7 @@ var Tela = function(a) {
 			
 		}
 	}
-	
+
 	this.mousewheel = function(e){				
 		var delta = e.wheelDelta/24;
 		if ( this._zoom >= 100 ){
@@ -260,6 +268,11 @@ var Tela = function(a) {
 			delta-=5;
 		if ( delta == 0 ) return;
 
+		this.changezoom(delta,e.pageX,e.pageY);
+		
+	}
+
+	this.changezoom = function(delta,pageX,pageY){
 		var antes=this._zoom;
 		var depois=this._zoom+delta;
 		
@@ -275,15 +288,15 @@ var Tela = function(a) {
 			(
 				(100/depois)*this._width*((100-depois)/100)
 				- (100/antes)*this._width*((100-antes)/100)
-			)*((e.pageX)/this._width);		
+			)*((pageX)/this._width);		
 		this._eixoy+=
 			(
 				(100/depois)*this._height*((100-depois)/100)
 				- (100/antes)*this._height*((100-antes)/100)
-			)*((e.pageY)/this._height);		
-		
+			)*((pageY)/this._height);		
 		
 		this.show();
+		
 	}
 	
 	this.showfio = function(p1,p2,recuo){
