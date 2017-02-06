@@ -115,11 +115,12 @@ var Tela = function(a) {
     this.mouseup_ =    function(e) { tela_.mouseup(e);    };	
 	this.keydown_ =    function(e) { tela_.keydown(e);    };
 	this.mousewheel_ = function(e) { tela_.mousewheel(e); };
+	this.dblclick_   = function(e) { tela_.dblclick(e); };
+	
 	
     this.mousedown = function(e) {		
 		var px = (e.pageX-8)*(100/this._zoom)+8;
 		var py = (e.pageY-8)*(100/this._zoom)+8;
-	
 		
 		if ( e.button == this.clickesq )
 		{
@@ -272,6 +273,19 @@ var Tela = function(a) {
 		
 	}
 
+	this.dblclick = function(e){
+		var px = (e.pageX-8)*(100/this._zoom)+8;
+		var py = (e.pageY-8)*(100/this._zoom)+8;
+		
+		for (var b = 0; b < this._nodes.length ; b++) {						
+			// clickando no node
+			if ( this._nodes[b].inside(px-8,py-8) ){
+				//alert('Componente ' + this._nodes[b]._text );
+			}
+		}
+		
+	}
+	
 	this.changezoom = function(delta,pageX,pageY){
 		var antes=this._zoom;
 		var depois=this._zoom+delta;
@@ -385,6 +399,7 @@ var Tela = function(a) {
 	window.addEventListener("mouseup", 		this.mouseup_	, false);	
 	window.addEventListener("keydown", 		this.keydown_	, false);	
 	window.addEventListener("mousewheel", 	this.mousewheel_, false);	
+	window.addEventListener("dblclick", 	this.dblclick_  , false);	
 	
 	this._fundos.push(new Fundo());
 };
