@@ -1,5 +1,4 @@
 
-
 <!-- saved from url=(0062)http://www.uco.es/~in1rosaj/tools/jsUML2/ejemplos/classGS.html -->
 <!-- blueprint unreal -> http://www.michalorzelek.com/blog/wp-content/uploads/2014/07/ForestGenerator_CreateGrid.png -->
 <html>
@@ -18,7 +17,6 @@
 		</div>
 	</body>	
 </html>
-
 
 <script type="text/javascript">
 
@@ -131,14 +129,13 @@ var Tela = function(a) {
 		
 		if ( e.button == this.clickesq )
 		{
+			this._tryclose = null;
 			for (var b = 0; b < this._nodes.length ; b++) {						
 				if ( this._nodes[b] == null ) continue;
-				if ( this._nodes[b].insideClose(px-8,py-8) ){
-					for ( var i=this._ligacoes.length-1;i>=0;i-- )
-						if ( this._ligacoes[i][0] == b || this._ligacoes[i][2] == b)
-							this._ligacoes.splice(i,1);
-
-					this._nodes[b] = null;					
+				// close etapa 1
+				if ( this._nodes[b].insideClose(px-8,py-8) ){				
+					this._tryclose = b;
+					break;
 				}else{
 					// clickando no node
 					if ( this._nodes[b].inside(px-8,py-8) ){
@@ -209,16 +206,17 @@ var Tela = function(a) {
 			// analise contornos
 			for (var b = 0; b < this._nodes.length ; b++) {			
 				if ( this._nodes[b] == null ) continue;
-				if ( this._nodes[b].inside(px-8,py-8) ){
-					var slot = this._nodes[b].insideSlot(px-8,py-8);						
-					if ( slot != null ){						
-						this._mouseSobreSlot=[b,slot[0],slot[1]];												
-						break;
-					}
-					if ( this._nodes[b].insideClose(px-8,py-8) )
-					{
-						this._mouseSobreClose=b;
-						break;
+				if ( this._nodes[b].insideClose(px-8,py-8) )
+				{
+					this._mouseSobreClose=b;
+					break;
+				}else{
+					if ( this._nodes[b].inside(px-8,py-8) ){
+						var slot = this._nodes[b].insideSlot(px-8,py-8);						
+						if ( slot != null ){						
+							this._mouseSobreSlot=[b,slot[0],slot[1]];												
+							break;
+						}
 					}
 				}
 			};							
@@ -231,7 +229,6 @@ var Tela = function(a) {
 		}
 		// printando o objeto se movendo		
 		this.show()		
-		
 	}
 	
 	this.mouseup = function(e){
@@ -241,9 +238,19 @@ var Tela = function(a) {
 		if ( e.button == this.clickesq ) 
 		{
 			if ( this._candidato_ligacao != null )
-				this._ligacoes.push(this._candidato_ligacao);
-			if ( this._flying != null )
-				this._flying = null;
+				this._ligacoes.push(this._candidato_ligacao);			
+			this._flying = null;
+			if ( this._tryclose != null && this._nodes[this._tryclose] != null ){
+				var b = this._tryclose;
+				if ( this._nodes[b].insideClose(px-8,py-8) ){				
+					this._tryclose = b;
+					for ( var i=this._ligacoes.length-1;i>=0;i-- )
+						if ( this._ligacoes[i][0] == b || this._ligacoes[i][2] == b)
+							this._ligacoes.splice(i,1);
+					this._nodes[b] = null;					
+				}
+				this._tryclose = null;
+			}
 			this._element = null;
 			this.show();
 		}
@@ -593,7 +600,9 @@ var Node = function(a) {
 	}
 
 	this.getPointClose = function(){
-		return [this.getx()+this._width*.9+3,this.gety()+this._height*.07+3];
+		if ( this._height < 40 )
+			return [this.getx()+this._width*.9-4,this.gety()+this._height*.07-8];
+		return [this.getx()+this._width*.9+5,this.gety()+this._height*.07+5];
 	}
 	
 	this.getnumligacaobyslot = function(numseq,isSender,requestid){
@@ -644,8 +653,6 @@ var Node = function(a) {
 		context.stroke();	
 	}
 	
-	
-	
 	this.printaslots = function(){
 		var p = null;	
 		var id = this.getidnode();
@@ -692,13 +699,15 @@ var Node = function(a) {
 		//this.printContorno();
 	}
 
-	this.printaclose = function(selecionado){
+	this.printaclose = function(){
 		var p = this.getPointClose();
-		
-		this.printa4pontos(p[0],p[1]+1,p[0]+1,p[1],p[0]+6,p[1]+5,p[0]+5,p[1]+6,this._cor3);
-		this.printa4pontos(p[0]+5,p[1],p[0]+6,p[1]+1,p[0]+1,p[1]+6,p[0],p[1]+5,this._cor3);
-		if ( tela_._mouseSobreClose != null && tela_._mouseSobreClose == this.getidnode() ) 
-			this.printacirculo(p[0]+3, p[1]+3, this._lineWidth*2, this._lineWidth, "#ff0000");
+		var emcima = tela_._mouseSobreClose != null && tela_._mouseSobreClose == this.getidnode();
+		if ( this._height >= 40 || emcima){
+			this.printa4pontos(p[0]-2,p[1]-1,p[0]-1,p[1]-2,p[0]+4,p[1]+3,p[0]+3,p[1]+4,this._cor3);
+			this.printa4pontos(p[0]+3,p[1]-2,p[0]+4,p[1]-1,p[0]-1,p[1]+4,p[0]-2,p[1]+3,this._cor3);
+		}
+		if ( emcima ) 
+			this.printacirculo(p[0]+1, p[1]+1, this._lineWidth*2, this._lineWidth, "#ff0000");
 	}
 	
 	this.printaslotmouse = function(num_seq,isSender){
@@ -781,11 +790,9 @@ var Node = function(a) {
 		return null;
 	}
 	
-	this.insideClose = function(x,y){
-		x-=2;
-		y-=2;
+	this.insideClose = function(x_,y_){
 		var p = this.getPointClose();
-		if ( x >= p[0]-this._campoVisaoSlot && x <= p[0]+this._campoVisaoSlot && y >= p[1]-this._campoVisaoSlot && y <= p[1]+this._campoVisaoSlot ){							
+		if ( x_ >= p[0]-this._campoVisaoSlot && x_ <= p[0]+this._campoVisaoSlot && y_ >= p[1]-this._campoVisaoSlot && y_ <= p[1]+this._campoVisaoSlot ){							
 			return true;
 		}
 		return false;
@@ -875,6 +882,7 @@ function NodeJuncao(a){
 		context.fill();	
 		
 		this.printaslots();
+		this.printaclose();
 	};
 }
 NodeJuncao.prototype = Object.create(Node.prototype);
