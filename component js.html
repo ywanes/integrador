@@ -12,10 +12,12 @@
 				
 		
 		<!--<div id="diagrama"  style="position: relative;" ></div> -->
-		<div style="position: relative; overflow: hidden;">
-			<div id="diagrama1" style="z-index: 1;position: absolute; left: 0; top: 0;" oncontextmenu="return false;"></div>
+		<div style="position: relative; overflow: hidden;">			
+			<div id="diagrama1" style="position: absolute;" oncontextmenu="return false;"></div>
+			<div id="input1" style="position: absolute;"    oncontextmenu="return false;"></div>
 			
-			<div id="diagrama2" style="z-index: 0position: absolute; left: 0; top: 0;" oncontextmenu="return false;"></div>
+			<div id="diagrama2"                             oncontextmenu="return false;"></div>
+			
 		</div>
 	</body>	
 </html>
@@ -266,24 +268,32 @@ var Tela = function(a) {
 		}
 	}
 
-	this.keydown = function(e){	
-		var txt = this._text;
-		if ( txt.length > 20 )
-			txt = txt.substring(1, 20);
-		if ( txt == "" )
-			txt = "new";
-		if ( e.keyCode == 13 ){		
-			if ( this._mouse.length == 2){	
-				this.addNode(this._mouse[0]-85,this._mouse[1]-27,txt)
-				this.show();
-			}else{				
-				this._nodes.push(new Node({ x:this._width/2, y:this._height/2, name:txt }));		
-				this.show();
+	this.keydown = function(e){				
+		if ( e.keyCode == 32 || ( e.keyCode >= 48 && e.keyCode <= 90 ) ){						
+			if (document.getElementById('input1').childElementCount == 0 && this._mouse[0] != null ){				
+				var input_ = document.createElement('input');
+				input_.type = 'text';
+				input_.style.position = 'fixed';
+				input_.x=this._mouse[0]-85;
+				input_.y=this._mouse[1]-27;				
+				input_.style.left = input_.x+'px';
+				input_.style.top = input_.y+'px';			
+				input_.onkeydown = function handleEnter(e) {
+					var keyCode = e.keyCode;
+					if (e.keyCode === 13) {						
+						var txt = this.value.trim();
+						if ( txt.length > 20 )
+							txt = txt.substring(1, 20);
+						if ( txt != "" ){							
+							tela_.addNode(this.x,this.y,txt);													
+						}
+						document.getElementById('input1').removeChild(this);
+						tela_.show();
+					}
+				};			
+				document.getElementById('input1').appendChild(input_);
+				input_.focus();			
 			}
-			this._text = "";
-		}else{						
-			this._text += String.fromCharCode(e.keyCode);
-			
 		}
 	}
 
@@ -409,7 +419,7 @@ var Tela = function(a) {
 	
 	this.addNode = function(a,b,c){		
 		var c_ = c.trim();
-		switch(c_) {
+		switch(c_.toUpperCase()) {
 			case "INICIO":
 				this._nodes.push(new NodeInicio({ x:a, y:b, name:c_ }));		
 				break;
@@ -799,14 +809,13 @@ var Node = function(a) {
 		}
 		return false;
 	}
-	
 };
 
 function NodeInicio(a){
 	Node.call(this,a);
 	this._height = 45;
 	this._width = 120;
-	this._text = "INÍCIO";
+	this._text = a.name;
 	this._n_slots_esq=0;
 	this._n_slots_dir=1;
 	this._cor_slot="#fff";
