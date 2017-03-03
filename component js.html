@@ -142,6 +142,14 @@ var Tela = function(a) {
 		if ( e.button == this.clickesq )
 		{
 			this._tryclose = null;
+			//verifica click painel			
+			//////
+			console.log(1);
+			if ( tela_._mouse_[0]-8 >= this._width-this._fundos[0].len_painel && tela_._mouse_[0]-8 <= this._width && tela_._mouse_[1]-8 <= this._fundos[0].len_painel ){
+				this._fundos[0].start_animation();
+				return;
+			}			
+			
 			for (var b = 0; b < this._nodes.length ; b++) {						
 				if ( this._nodes[b] == null ) continue;
 				// close etapa 1
@@ -459,18 +467,26 @@ var Tela = function(a) {
 	window.addEventListener("mousewheel", 	this.mousewheel_, false);	
 	window.addEventListener("dblclick", 	this.dblclick_  , false);	
 	
-	this._fundos.push(new Fundo());
+	this._fundos.push(new Fundo());	
 };
 
 
 var Fundo = function() {
 	this.len_painel=30;
+	this.stat_animation=0; // 0-desligado 1-ligando 2-ligado
+	
+	this.init_animation = function(){
+		tela_._fundos[0].pos_animation1=240;
+		tela_._fundos[0].pos_animation2=200;	
+	}
+	
 	this.show = function() {
 		for ( var i=10;i<2000;i+=120){
 			this.linha(i,2000,0);			
 			this.linha(i,2000,1);
 			this.cubo(i,2000)
 		}	
+		this.painel()
 		this.painel()
 	}
 
@@ -522,10 +538,63 @@ var Fundo = function() {
 		context2.fill();	
 		
 	}
+	
+	this.printa4pontos = function(x1, y1, x2, y2, x3, y3, x4, y4, cor){
+		context2.beginPath();			
+		context2.moveTo(x1, y1);
+		context2.lineTo(x2, y2);
+		context2.lineTo(x3, y3);
+		context2.lineTo(x4, y4);
+		context2.fillStyle = cor;	
+		context2.fill();	
+	}
+	
+	this.printa = function(x1, y1, x2, y2, cor){
+		this.printa4pontos(x1, y1, x2, y1, x2, y2, x1, y2, cor);
+	}
+	
 	this.painel = function(){
 		context2.drawImage(document.getElementById("img_engrenagem"), tela_._width-this.len_painel,0 ,this.len_painel,this.len_painel);    
-		context2.drawImage(document.getElementById("img_engrenagem"), tela_._width-this.len_painel,0 ,this.len_painel,this.len_painel);    		
+		this.printa(tela_._width-(240-this.pos_animation1),this.len_painel,tela_._width,this.len_painel+(200-this.pos_animation2+10),"#000000");
 	}
+	
+	this.start_animation = function(){
+		if ( this.stat_animation == 0 ){
+			this.stat_animation=1;
+			this.init_animation();
+			this.animation();
+			return;
+		}
+		if ( this.stat_animation == 2 ){
+			this.stat_animation=0;
+			this.init_animation();
+			tela_.show();
+		}
+		
+		
+		//this.init_animation();
+	}
+	
+	this.animation = function(){		
+		tela_._fundos[0].pos_animation1=240;
+		tela_._fundos[0].pos_animation2=200;
+		var i = setInterval(function(){
+			// do your thing
+			tela_.show();			
+			if ( tela_._fundos[0].pos_animation1 > 0 ){
+				tela_._fundos[0].pos_animation1-=20;
+				return;
+			}
+			if ( tela_._fundos[0].pos_animation2 > 0 )
+				tela_._fundos[0].pos_animation2-=20;
+			else{
+				clearInterval(i);
+				tela_._fundos[0].stat_animation=2;
+			}
+		}, 10);			
+	}
+	
+	
 };
 
 
@@ -927,6 +996,7 @@ window.onload = function(){
 	tela.addLigacao(1,0,2,0);
 	tela.addLigacao(1,0,3,0);
 	tela.show();
+	
 }
 
 </script>    
