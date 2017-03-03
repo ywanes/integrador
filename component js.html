@@ -5,20 +5,19 @@
 
 <html>
 	<meta charset="UTF-8">
-	<body bgcolor="#444444">	
-		<!-- https://www.base64-image.de/ -->
-		<!-- http://icon-icons.com/descargaimagen.php?id=50262&root=510/PNG/32/&file=ios7-gear_icon-icons.com_50262.png -->
-		<img id="img_engrenagem" width="20" style="display: none" height="20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAalJREFUWIXt1r9OVEEUBvAfmmB8AAwJsVADUqkkJFKpJBbSUJBoZyiIGlsihRoBY+K/t9CCN7CxkTcggUCBBBcSCmy0MyYKFndXxrv33szOLlb7JaeZOed8351zZu6hiy7ScAZrOKxbDRf/p4B7AXnDXqQkOhHhcxOvMBSsnS7wC9f664Jup4gKcRe/ZF/4FdcxiBXNJ1DDpbpt1dcO8DiVfCIgb8cOMFNGUlWCGziZqj5Aj6yMLeMc9rR/At8xmqr+aknSDxiXNd4pjGFJdtx536lUcrKGyydcrPB/UCBivFXSs5jFE6znkn2MiH+Xi9nBMzzChRgBm8rrORERf6UifjNGQFVD9UXE9+BnSfyPvHPMS3isKBLwucI/5jpdRm/J3m5E/N8mfKozTVjDPOZENmGIIc11XKjwv6/5Gl5rlTREJx6iyVTy8zrzFH/DSIqANx0gb9j7MpKqa7iM3ynKczjEp9TgaUczwb6soYaxqvkrv8hewVFsO5oFkgeSBm7htezH1MBsgYC3wf4AXuJOu+RleFgg4PlxkRWhHxsB+Y5/h9YuuojGH6lk4lTsctw/AAAAAElFTkSuQmCC">		
-				
-		
-		<!--<div id="diagrama"  style="position: relative;" ></div> -->
-		<div style="position: relative; overflow: hidden;">			
-			<div id="diagrama1" style="position: absolute;" oncontextmenu="return false;"></div>
-			<div id="input1" style="position: absolute;"    oncontextmenu="return false;"></div>
-			
-			<div id="diagrama2"                             oncontextmenu="return false;"></div>
-			
+	<body bgcolor="#444444">					
+		<div id="elementos_graficos">					
+			<div id="div_new"         style="position: absolute;"  oncontextmenu="return false;" ></div>
+			<div id="div_componentes" style="position: absolute;"  oncontextmenu="return false;"></div>
+			<div id="div_fundo"                                    oncontextmenu="return false;" ></div>
+		</div>		
+		<div id="objetos_complementares">
+			<div id="input1"     oncontextmenu="return false;"></div>		
+			<!-- https://www.base64-image.de/ -->
+			<!-- http://icon-icons.com/descargaimagen.php?id=50262&root=510/PNG/32/&file=ios7-gear_icon-icons.com_50262.png -->
+			<img id="img_engrenagem" style="display: none" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAalJREFUWIXt1r9OVEEUBvAfmmB8AAwJsVADUqkkJFKpJBbSUJBoZyiIGlsihRoBY+K/t9CCN7CxkTcggUCBBBcSCmy0MyYKFndXxrv33szOLlb7JaeZOed8351zZu6hiy7ScAZrOKxbDRf/p4B7AXnDXqQkOhHhcxOvMBSsnS7wC9f664Jup4gKcRe/ZF/4FdcxiBXNJ1DDpbpt1dcO8DiVfCIgb8cOMFNGUlWCGziZqj5Aj6yMLeMc9rR/At8xmqr+aknSDxiXNd4pjGFJdtx536lUcrKGyydcrPB/UCBivFXSs5jFE6znkn2MiH+Xi9nBMzzChRgBm8rrORERf6UifjNGQFVD9UXE9+BnSfyPvHPMS3isKBLwucI/5jpdRm/J3m5E/N8mfKozTVjDPOZENmGIIc11XKjwv6/5Gl5rlTREJx6iyVTy8zrzFH/DSIqANx0gb9j7MpKqa7iM3ynKczjEp9TgaUczwb6soYaxqvkrv8hewVFsO5oFkgeSBm7htezH1MBsgYC3wf4AXuJOu+RleFgg4PlxkRWhHxsB+Y5/h9YuuojGH6lk4lTsctw/AAAAAElFTkSuQmCC">		
 		</div>
+		
 	</body>	
 </html>
 
@@ -29,10 +28,9 @@ var ctx2 = null;
 var tela_=null;
 //copy(can.toDataURL("image/png")+"");
 	
-	
 var Tela = function(a) {
 	// validacao
-    if (document.getElementById('diagrama1') == null || document.getElementById('diagrama1').nodeName != "DIV") { alert("ERROR"); console.log("DIV \"" + document.getElementById('diagrama1') + "\" nao encontrada!"); return;}
+    if (document.getElementById('div_componentes') == null || document.getElementById('div_componentes').nodeName != "DIV") { alert("ERROR"); console.log("DIV \"" + document.getElementById('div_componentes') + "\" nao encontrada!"); return;}
 	tela_=this;
 	
     //this._width = a.width;
@@ -63,6 +61,16 @@ var Tela = function(a) {
 	this.clickesq = 0;
 	this.clickscroll = 1;
 	this.clickdir = 2;
+
+
+	
+	// canvas context
+	var can3 = document.createElement("canvas");
+    can3.width = this._width;
+    can3.height = this._height;
+    context3 = can3.getContext("2d");	
+	context3.globalAlpha = .4;		
+	document.getElementById('div_new').appendChild(can3);		
 	
 	// canvas context
 	var can = document.createElement("canvas");
@@ -70,8 +78,7 @@ var Tela = function(a) {
     can.height = this._height;
     context = can.getContext("2d");	
 	context.globalAlpha = .4;				
-	document.getElementById('diagrama1').appendChild(can);	
-	
+	document.getElementById('div_componentes').appendChild(can);	
 	
 	// canvas context
 	var can2 = document.createElement("canvas");
@@ -79,7 +86,8 @@ var Tela = function(a) {
     can2.height = this._height;
     context2 = can2.getContext("2d");	
 	context2.globalAlpha = .4;		
-	document.getElementById('diagrama2').appendChild(can2);		
+	document.getElementById('div_fundo').appendChild(can2);		
+	
 	
     this._element = null;
 	this._mouseSobreSlot = null;
@@ -276,8 +284,10 @@ var Tela = function(a) {
 				input_.style.position = 'fixed';
 				input_.x=this._mouse[0]-85;
 				input_.y=this._mouse[1]-27;				
-				input_.style.left = input_.x+'px';
-				input_.style.top = input_.y+'px';			
+				input_.x_=this._mouse_[0]-85;
+				input_.y_=this._mouse_[1]-27;				
+				input_.style.left = input_.x_+'px';
+				input_.style.top = input_.y_+'px';			
 				input_.onkeydown = function handleEnter(e) {
 					var keyCode = e.keyCode;
 					if (e.keyCode === 13) {						
@@ -454,12 +464,14 @@ var Tela = function(a) {
 
 
 var Fundo = function() {
+	this.len_painel=30;
 	this.show = function() {
 		for ( var i=10;i<2000;i+=120){
-			this.linha(i,2000,0);
+			this.linha(i,2000,0);			
 			this.linha(i,2000,1);
 			this.cubo(i,2000)
 		}	
+		this.painel()
 	}
 
 	this.linha = function(a,b,c) {
@@ -509,6 +521,10 @@ var Fundo = function() {
 		
 		context2.fill();	
 		
+	}
+	this.painel = function(){
+		context2.drawImage(document.getElementById("img_engrenagem"), tela_._width-this.len_painel,0 ,this.len_painel,this.len_painel);    
+		context2.drawImage(document.getElementById("img_engrenagem"), tela_._width-this.len_painel,0 ,this.len_painel,this.len_painel);    		
 	}
 };
 
