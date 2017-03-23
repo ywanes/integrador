@@ -27,7 +27,17 @@ var context = null;
 var ctx2 = null;
 var tela_=null;
 //copy(can.toDataURL("image/png")+"");
-	
+
+
+var global = {};
+global["cor_preenchimento_preto"]="#030303";
+/* listando itens da global
+for ( var i in global) 
+	if ( typeof global[i] != "function" && global[i] != null)
+		console.log(i+" "+global[i]);
+*/
+
+
 var Tela = function(a) {
 	// validacao
     if (document.getElementById('div_componentes') == null || document.getElementById('div_componentes').nodeName != "DIV") { alert("ERROR"); console.log("DIV \"" + document.getElementById('div_componentes') + "\" nao encontrada!"); return;}
@@ -619,7 +629,8 @@ var Node = function(a) {
 	
 	this._cor1="#2E9AFE";	// cor degrade 1     - azul
 	this._cor2="#444444";	// cor degrade 2     - cinza
-	this._cor3="#030303";	// cor preenchimento - preto
+	//this._cor3="#030303";	// cor preenchimento - preto
+	this._cor3=global["cor_preenchimento_preto"];
 	
 	this._fonte_txt = ' 12pt Calibri';
 	this._px_fonte_txt = 16;
