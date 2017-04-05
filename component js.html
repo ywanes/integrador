@@ -13,6 +13,7 @@
 		</div>		
 		<div id="objetos_complementares">
 			<div id="input1"     oncontextmenu="return false;"></div>		
+			<div id="input2"     oncontextmenu="return false;"></div>		
 			<!-- https://www.base64-image.de/ -->
 			<!-- http://icon-icons.com/descargaimagen.php?id=50262&root=510/PNG/32/&file=ios7-gear_icon-icons.com_50262.png -->
 			<img id="img_engrenagem" style="display: none" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAalJREFUWIXt1r9OVEEUBvAfmmB8AAwJsVADUqkkJFKpJBbSUJBoZyiIGlsihRoBY+K/t9CCN7CxkTcggUCBBBcSCmy0MyYKFndXxrv33szOLlb7JaeZOed8351zZu6hiy7ScAZrOKxbDRf/p4B7AXnDXqQkOhHhcxOvMBSsnS7wC9f664Jup4gKcRe/ZF/4FdcxiBXNJ1DDpbpt1dcO8DiVfCIgb8cOMFNGUlWCGziZqj5Aj6yMLeMc9rR/At8xmqr+aknSDxiXNd4pjGFJdtx536lUcrKGyydcrPB/UCBivFXSs5jFE6znkn2MiH+Xi9nBMzzChRgBm8rrORERf6UifjNGQFVD9UXE9+BnSfyPvHPMS3isKBLwucI/5jpdRm/J3m5E/N8mfKozTVjDPOZENmGIIc11XKjwv6/5Gl5rlTREJx6iyVTy8zrzFH/DSIqANx0gb9j7MpKqa7iM3ynKczjEp9TgaUczwb6soYaxqvkrv8hewVFsO5oFkgeSBm7htezH1MBsgYC3wf4AXuJOu+RleFgg4PlxkRWhHxsB+Y5/h9YuuojGH6lk4lTsctw/AAAAAElFTkSuQmCC">		
@@ -29,19 +30,18 @@ var tela_=null;
 //copy(can.toDataURL("image/png")+"");
 
 
-var global = {};
-global["cor_preenchimento_preto"]="#030303";
-/* listando itens da global
-for ( var i in global) 
-	if ( typeof global[i] != "function" && global[i] != null)
-		console.log(i+" "+global[i]);
-*/
-
-
 var Tela = function(a) {
 	// validacao
     if (document.getElementById('div_componentes') == null || document.getElementById('div_componentes').nodeName != "DIV") { alert("ERROR"); console.log("DIV \"" + document.getElementById('div_componentes') + "\" nao encontrada!"); return;}
 	tela_=this;
+
+	this.global = {};
+	this.global["cor_preenchimento_preto"]="#030303";
+	/* listando itens da global
+	for ( var i in global) 
+		if ( typeof global[i] != "function" && global[i] != null)
+			console.log(i+" "+global[i]);
+	*/
 	
     //this._width = a.width;
 	//this._height = a.height;
@@ -153,13 +153,11 @@ var Tela = function(a) {
 		{
 			this._tryclose = null;
 			//verifica click painel			
-			//////
-			console.log(1);
 			if ( tela_._mouse_[0]-8 >= this._width-this._fundos[0].len_painel && tela_._mouse_[0]-8 <= this._width && tela_._mouse_[1]-8 <= this._fundos[0].len_painel ){
 				this._fundos[0].start_animation();
 				return;
 			}			
-			
+						
 			for (var b = 0; b < this._nodes.length ; b++) {						
 				if ( this._nodes[b] == null ) continue;
 				// close etapa 1
@@ -295,7 +293,14 @@ var Tela = function(a) {
 	}
 
 	this.keydown = function(e){				
+		// verifica digitação no painel
+		if ( document.getElementById('input2') != null && document.getElementById('input2').firstElementChild != null && document.getElementById('input2').firstElementChild === document.activeElement ){
+			return;
+		}		
+		
+		// keycode permitidos
 		if ( e.keyCode == 32 || ( e.keyCode >= 48 && e.keyCode <= 90 ) ){						
+			// verifica presença de coordenada
 			if (document.getElementById('input1').childElementCount == 0 && this._mouse[0] != null ){				
 				var input_ = document.createElement('input');
 				input_.type = 'text';
@@ -305,7 +310,7 @@ var Tela = function(a) {
 				input_.x_=this._mouse_[0]-85;
 				input_.y_=this._mouse_[1]-27;				
 				input_.style.left = input_.x_+'px';
-				input_.style.top = input_.y_+'px';			
+				input_.style.top = input_.y_+'px';							
 				input_.onkeydown = function handleEnter(e) {
 					var keyCode = e.keyCode;
 					if (e.keyCode === 13) {						
@@ -569,6 +574,10 @@ var Fundo = function() {
 	}
 	
 	this.start_animation = function(){
+		// stat_animation:
+		// 0 - fechado(recuado)
+		// 1 - abrindo
+		// 2 - aberto
 		if ( this.stat_animation == 0 ){
 			this.stat_animation=1;
 			this.init_animation();
@@ -578,18 +587,16 @@ var Fundo = function() {
 		if ( this.stat_animation == 2 ){
 			this.stat_animation=0;
 			this.init_animation();
+			tela_._fundos[0].hide_componentes_painel();
 			tela_.show();
+			return;
 		}
-		
-		
-		//this.init_animation();
 	}
 	
 	this.animation = function(){		
 		tela_._fundos[0].pos_animation1=240;
 		tela_._fundos[0].pos_animation2=200;
 		var i = setInterval(function(){
-			// do your thing
 			tela_.show();			
 			if ( tela_._fundos[0].pos_animation1 > 0 ){
 				tela_._fundos[0].pos_animation1-=20;
@@ -600,10 +607,40 @@ var Fundo = function() {
 			else{
 				clearInterval(i);
 				tela_._fundos[0].stat_animation=2;
+				tela_._fundos[0].show_componentes_painel();
 			}
 		}, 10);			
 	}
 	
+	this.show_componentes_painel = function(){
+		if (document.getElementById('input2').childElementCount == 0 ){				
+			var x=tela_._width-220;
+			var y=220;
+			var input_ = document.createElement('input');
+			input_.type = 'text';
+			input_.style.position = 'fixed';
+			input_.style.left = x+'px';
+			input_.style.top = y+'px';			
+			input_.onkeydown = function handleEnter(e) {
+				var keyCode = e.keyCode;
+				if (e.keyCode === 13) {											
+					var txt = this.value.trim();
+					if ( txt.length > 20 )
+						txt = txt.substring(1, 20);
+					tela_.global["cor_preenchimento_preto"]=txt;
+					tela_.show();					
+				}
+			};			
+			input_.style.backgroundColor = '#999999';
+			document.getElementById('input2').appendChild(input_);
+			input_.focus();			
+		}
+	}
+	
+	this.hide_componentes_painel = function(){
+		document.getElementById('input2').removeChild(document.getElementById('input2').firstElementChild);
+		tela_.show();
+	}
 	
 };
 
@@ -627,10 +664,19 @@ var Node = function(a) {
 	this._cor_fio="#599";
 	this._cor_slot="#599";
 	
-	this._cor1="#2E9AFE";	// cor degrade 1     - azul
-	this._cor2="#444444";	// cor degrade 2     - cinza
-	//this._cor3="#030303";	// cor preenchimento - preto
-	this._cor3=global["cor_preenchimento_preto"];
+	
+	
+	this._cor1="";	// cor degrade 1     - azul
+	this._cor2="";	// cor degrade 2     - cinza
+	this._cor3=tela_.global["cor_preenchimento_preto"];	// cor preenchimento - preto
+	this.init_colors = function(){
+		this._cor1="#2E9AFE";	// cor degrade 1     - azul
+		this._cor2="#444444";	// cor degrade 2     - cinza
+		//this._cor3="#030303";	// cor preenchimento - preto
+		this._cor3=tela_.global["cor_preenchimento_preto"];	
+	}	
+	this.init_colors();
+	
 	
 	this._fonte_txt = ' 12pt Calibri';
 	this._px_fonte_txt = 16;
@@ -660,6 +706,7 @@ var Node = function(a) {
 	this.setx(a.x);
 	this.sety(a.y);	
 
+	
 	this.printa4pontos = function(x1, y1, x2, y2, x3, y3, x4, y4, cor){
 		context.beginPath();			
 		context.moveTo(x1, y1);
@@ -830,6 +877,8 @@ var Node = function(a) {
 	}
 
 	this.show = function() {	
+		this.init_colors();
+		
 		var linha= this._linha;	
 		var fresta = this._fresta;	
 		
