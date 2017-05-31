@@ -59,6 +59,9 @@ var Tela = function(a) {
 		this.global["cor_fio"]="#559999";
 		this.global["cor_slot"]="#559999";
 		this.global["cor_bg_tab_config"]="#ffffff";
+		this.global["range_transparency1"]=40;
+		this.global["range_transparency2"]=40;
+		this.global["range_transparency3"]=40;
 	}
 	this.resetconfigpainel();
 	
@@ -110,14 +113,13 @@ var Tela = function(a) {
 	this.clickscroll = 1;
 	this.clickdir = 2;
 
-
 	
 	// canvas context
 	var can3 = document.createElement("canvas");
     can3.width = this._width;
     can3.height = this._height;
     context3 = can3.getContext("2d");	
-	context3.globalAlpha = .4;		
+	context3.globalAlpha = this.global["range_transparency3"]/100;
 	document.getElementById('div_new').appendChild(can3);		
 	
 	// canvas context
@@ -125,7 +127,7 @@ var Tela = function(a) {
     can.width = this._width;
     can.height = this._height;
     context = can.getContext("2d");	
-	context.globalAlpha = .4;				
+	context.globalAlpha = this.global["range_transparency1"]/100;
 	document.getElementById('div_componentes').appendChild(can);	
 	
 	// canvas context
@@ -133,7 +135,7 @@ var Tela = function(a) {
     can2.width = this._width;
     can2.height = this._height;
     context2 = can2.getContext("2d");	
-	context2.globalAlpha = .4;		
+	context2.globalAlpha = this.global["range_transparency2"]/100;
 	document.getElementById('div_fundo').appendChild(can2);		
 	
 	
@@ -149,10 +151,10 @@ var Tela = function(a) {
 
 		context2.clearRect(0, 0, this._width, this._height);   // clean
 		context2.fillStyle = "#222222";                        // branco		
-		context2.fillRect(0, 0, this._width, this._height);	  // preenchendo fundo				
+		context2.fillRect(0, 0, this._width, this._height);	   // preenchendo fundo				
 
-		context.clearRect(0, 0, this._width*20, this._height*20);   // clean
-		context.fillStyle = "#222222";                        // branco		
+		context.clearRect(0, 0, this._width*20, this._height*20);     // clean
+		context.fillStyle = "#222222";                                // branco		
 		context.fillRect(0, 0, this._width*20, this._height*20);	  // preenchendo fundo				
 		
 		for (var i = 0; i < this._fundos.length; i++)   this._fundos[i].show()		
@@ -171,7 +173,10 @@ var Tela = function(a) {
 					p2=this._p2_correcao_flying;
 				this.showfio(p1,p2,0);			
 			}
-		}		
+		}
+		context.globalAlpha = this.global["range_transparency1"]/100;
+		context2.globalAlpha = this.global["range_transparency2"]/100;
+		context3.globalAlpha = this.global["range_transparency3"]/100;
 	};
 
 	// rotinas externas
@@ -233,6 +238,7 @@ var Tela = function(a) {
 		if ( e.button == this.clickscroll && tela_._mouse_.length == 2 )	
 		{		
 			this.changezoom(100-this._zoom,tela_._mouse_[0],tela_._mouse_[1]);
+			this.show();
 		}
 		
 		if ( e.button == this.clickdir )
@@ -538,34 +544,34 @@ var Fundo = function() {
 	
 	this.show = function() {
 		for ( var i=10;i<2000;i+=120){
-			this.linha(i,2000,0);			
-			this.linha(i,2000,1);
-			this.cubo(i,2000)
+			this.linha(i+2,2000,0);						
+			this.linha(i+2,2000,1);
+			this.cubo(i,2000);
 		}	
 		this.painel()
-		this.painel()
+		//this.painel()
 	}
 
 	this.linha = function(a,b,c) {
-		var d=2;
-
+		var d=1; // se for colocar diferente de 1 tem que adaptar muitos calculos
 		context2.beginPath();
-		context2.fillStyle = "#070707";	
+		context2.fillStyle = "#070707";			
 		if ( c == 0 ){
 			for ( var i=13-120;i<b;i+=120 )
 			{
 				context2.moveTo(a, i);
 				context2.lineTo(a+d,i);
-				context2.lineTo(a+d,i+117);
-				context2.lineTo(a,i+117);
-				context2.lineTo(a,i);
+				context2.lineTo(a+d,i+119);
+				context2.lineTo(a,i+119);
+				context2.lineTo(a,i);				
 			}
-		}else{
+		}else{		
+			d=1;		
 			context2.moveTo(0, a);
 			context2.lineTo(0,a+d);
 			context2.lineTo(b,a+d);
 			context2.lineTo(b,a);
-			context2.lineTo(0,a);
+			context2.lineTo(0,a);		
 		}
 		
 		context2.fill();	
@@ -663,8 +669,12 @@ var Fundo = function() {
 			input_.style.top = y+'px';		
 			var tmp = '<table id="tablebase" class="bordered" style="font-family:Verdana,sans-serif;font-size:10px;border-spacing: 0; width:235px" bgcolor="' + tela_.global["cor_bg_tab_config"] + '">';			
 			var keys = Object.keys(tela_.global);
-			for ( var i=0;i<keys.length;i++ )
-				tmp += "<tr><td>" + keys[i] + "</td><td><input type='color' id='blend-color' value='" + tela_.global[keys[i]] + "' onchange=\"tela_.global['" + keys[i] + "']=this.value;tela_.refreshconfigpaineldisplay();tela_.show();\"></td></tr>";
+			for ( var i=0;i<keys.length;i++ ){
+				if ( keys[i].indexOf("cor_") == 0 )
+					tmp += "<tr><td>" + keys[i] + "</td><td><input type='color' value='" + tela_.global[keys[i]] + "' onchange=\"tela_.global['" + keys[i] + "']=this.value;tela_.refreshconfigpaineldisplay();tela_.show();\"></td></tr>";
+				if ( keys[i].indexOf("range_") == 0 )
+					tmp += "<tr><td>" + keys[i] + "</td><td><input type='range' value='" + tela_.global[keys[i]] + "' style='width: 45px;' onchange=\"tela_.global['" + keys[i] + "']=this.value;tela_.refreshconfigpaineldisplay();tela_.show();\"></td></tr>";
+			}
 			tmp += "<tr><td><input type='button' value='reset config' onclick='tela_.resetconfigpaineldisplay();tela_.refreshconfigpaineldisplay();tela_.show()' ></td><td>&nbsp;</td></tr>";
 			tmp += '</table>';
 			
