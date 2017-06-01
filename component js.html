@@ -69,7 +69,6 @@ var Tela = function(a) {
 	
 	
 	this.save = function(){
-		alert(1);
 		var cookie_name='_save_component_js_default_';		
 		var _value='';
 		var _ndias=99999;		
@@ -80,15 +79,13 @@ var Tela = function(a) {
 		for ( var i=0;i<keys.length;i++ )
 			_value+=keys[i]+","+tela_.global[keys[i]]+",";
 		document.cookie = cookie_name + "=" + _value + ";" + expires + ";path=/";				
-		alert(document.cookie);
 	}
 	
 	this.tryloadconfigpainelbycookie = function(){
 		var cookie_name='_save_component_js_default_';
-		//var decodedCookie = decodeURIComponent(document.cookie);
+		var decodedCookie = decodeURIComponent(document.cookie);
 		var retorno = '';
-		//var ca = decodedCookie.split(';');
-		var ca = document.cookie.split(';');
+		var ca = decodedCookie.split(';');		
 		tt=ca;
 		var c='';
 		for(var i = 0; i < ca.length; i++) {
@@ -102,9 +99,14 @@ var Tela = function(a) {
 		}
 		if ( retorno != "" )
 		{
-			alert(retorno);
-		}else{
-			//alert(2);
+			var partes=retorno.split(',');
+			var tmp="";
+			for ( var i=0;i<partes.length;i++ )
+			{
+				tmp=partes[i];
+				if ( this.global[tmp] != null  && ++i<partes.length )
+					this.global[tmp]=partes[i];
+			}
 		}
 	}
 		
