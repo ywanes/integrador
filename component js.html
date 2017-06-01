@@ -45,13 +45,14 @@ var ctx2 = null;
 var tela_=null;
 //copy(can.toDataURL("image/png")+"");
 
-
+var tt;
 var Tela = function(a) {
 	// validacao
     if (document.getElementById('div_componentes') == null || document.getElementById('div_componentes').nodeName != "DIV") { alert("ERROR"); console.log("DIV \"" + document.getElementById('div_componentes') + "\" nao encontrada!"); return;}
 	tela_=this;
 
 	this.global = {};
+	
 	this.resetconfigpainel = function(){
 		this.global["cor_preenchimento_preto"]="#030303";
 		this.global["cor_degrade_1"]="#2E9AFE";
@@ -63,7 +64,52 @@ var Tela = function(a) {
 		this.global["range_transparency2"]=40;
 		this.global["range_transparency3"]=40;
 	}
+	
 	this.resetconfigpainel();
+	
+	
+	this.save = function(){
+		alert(1);
+		var cookie_name='_save_component_js_default_';		
+		var _value='';
+		var _ndias=99999;		
+		var d = new Date();		
+		d.setTime(d.getTime() + (_ndias*24*60*60*1000));
+		var expires = "expires=" + d.toGMTString();
+		var keys = Object.keys(tela_.global);
+		for ( var i=0;i<keys.length;i++ )
+			_value+=keys[i]+","+tela_.global[keys[i]]+",";
+		document.cookie = cookie_name + "=" + _value + ";" + expires + ";path=/";				
+		alert(document.cookie);
+	}
+	
+	this.tryloadconfigpainelbycookie = function(){
+		var cookie_name='_save_component_js_default_';
+		//var decodedCookie = decodeURIComponent(document.cookie);
+		var retorno = '';
+		//var ca = decodedCookie.split(';');
+		var ca = document.cookie.split(';');
+		tt=ca;
+		var c='';
+		for(var i = 0; i < ca.length; i++) {
+			c = ca[i];
+			while (c.charAt(0) == ' ')
+				c = c.substring(1);
+			if (c.indexOf(cookie_name) == 0) {
+				retorno=c.substring(cookie_name.length, c.length);
+				break;
+			}
+		}
+		if ( retorno != "" )
+		{
+			alert(retorno);
+		}else{
+			//alert(2);
+		}
+	}
+		
+	this.tryloadconfigpainelbycookie();
+	
 	
 	this.refreshconfigpaineldisplay = function(){
 		if ( this._fundos.length == 1 && document.getElementById('div2').childElementCount == 1 ){
@@ -77,6 +123,8 @@ var Tela = function(a) {
 			this.resetconfigpainel();
 		}
 	}
+
+
 	
 	/* listando itens da global
 	for ( var i in global) 
@@ -674,7 +722,10 @@ var Fundo = function() {
 				if ( keys[i].indexOf("range_") == 0 )
 					tmp += "<tr><td>" + keys[i] + "</td><td><input type='range' value='" + tela_.global[keys[i]] + "' style='width: 45px;' onchange=\"tela_.global['" + keys[i] + "']=this.value;tela_.refreshconfigpaineldisplay();tela_.show();\"></td></tr>";
 			}
-			tmp += "<tr><td><input type='button' value='reset config' onclick='tela_.resetconfigpaineldisplay();tela_.refreshconfigpaineldisplay();tela_.show()' ></td><td>&nbsp;</td></tr>";
+			tmp += "<tr>"
+			         +"<td><input type='button' value='reset config' onclick='tela_.resetconfigpaineldisplay();tela_.refreshconfigpaineldisplay();tela_.show()' ></td>"
+					 +"<td><input type='button' value='save config' onclick='tela_.save();' ></td>"
+				+"</tr>";			
 			tmp += '</table>';
 			
 			input_.innerHTML = tmp;
