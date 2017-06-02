@@ -67,7 +67,6 @@ var Tela = function(a) {
 	
 	this.resetconfigpainel();
 	
-	
 	this.save = function(){
 		var cookie_name='_save_component_js_default_';		
 		var _value='';
@@ -726,7 +725,7 @@ var Fundo = function() {
 			}
 			tmp += "<tr>"
 			         +"<td><input type='button' value='reset config' onclick='tela_.resetconfigpaineldisplay();tela_.refreshconfigpaineldisplay();tela_.show()' ></td>"
-					 +"<td><input type='button' value='save config' onclick='tela_.save();' ></td>"
+					 +"<td><input type='button' value='save' onclick='tela_.save();' ></td>"
 				+"</tr>";			
 			tmp += '</table>';
 			
