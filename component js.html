@@ -280,8 +280,10 @@ var Tela = function(a) {
 	
 	this.exporta = function()
 	{
+		var tmp_result='';
 		for (var b = 0; b < this._nodes.length ; b++)
-			console.log(this._nodes[b].showInfoExporta());
+			tmp_result+=this._nodes[b].showInfoExporta();
+		console.log(tmp_result);
 	}
 	
 	// rotinas externas
@@ -980,7 +982,7 @@ var Node = function(a) {
 		tmp_retorno=tmp_retorno.replace(/"\[\[TAG1\]\]"/g,tmp_tag1);
 		tmp_retorno=tmp_retorno.replace(/"\[\[TAG2\]\]"/g,tmp_tag2);
 		tmp_retorno=tmp_retorno.replace(/"\[\[TAG3\]\]"/g,tmp_tag3);
-		return '\ntela_.importa(['+tmp_retorno+'])';
+		return '\ntela_.importa(['+tmp_retorno+'])\n';
 	}
 	
 	this._linha = 10;	
