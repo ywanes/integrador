@@ -164,7 +164,6 @@ var Tela = function(a) {
 	this.clickesq = 0;
 	this.clickscroll = 1;
 	this.clickdir = 2;
-
 	
 	// canvas context
 	var can3 = document.createElement("canvas");
@@ -260,6 +259,14 @@ var Tela = function(a) {
 		return null;
 	}
 	
+	this.fechaCaixaTexto = function()
+	{
+		if ( document.getElementById('elemento_temporario') != null ){
+			document.getElementById('elemento_temporario').remove();
+			tela_.tmp_node=null;
+		}	
+	}
+	
 	this.importa = function(lista)
 	{
 		/*modelo
@@ -344,7 +351,7 @@ var Tela = function(a) {
 		{
 			this._movendo_eixo = true;
 			this._relx = px - this._eixox;
-			this._rely = py - this._eixoy;			
+			this._rely = py - this._eixoy;						
 		}
     };
 	
@@ -416,8 +423,10 @@ var Tela = function(a) {
 				if ( this._nodes[b].insideClose(px-8,py-8) ){				
 					this._tryclose = b;
 					for ( var i=this._ligacoes.length-1;i>=0;i-- )
-						if ( this._ligacoes[i][0] == b || this._ligacoes[i][2] == b)
+						if ( this._ligacoes[i][0] == b || this._ligacoes[i][2] == b){
 							this._ligacoes.splice(i,1);
+							tela_.fechaCaixaTexto();
+						}
 					this._nodes[b] = null;					
 				}
 				this._tryclose = null;
@@ -446,14 +455,14 @@ var Tela = function(a) {
 		if ( e.keyCode == 32 || ( e.keyCode >= 48 && e.keyCode <= 90 ) ){						
 			// verifica presença de coordenada
 			if (document.getElementById('div1').childElementCount == 0 && this._mouse[0] != null ){				
-
 				var input_ = document.createElement('input');
 				input_.type = 'text';
+				input_.id = 'elemento_temporario';
 				input_.style.position = 'fixed';
 				input_.x=this._mouse[0]-85;
 				input_.y=this._mouse[1]-27;				
-				input_.x_=this._mouse_[0]-85;
-				input_.y_=this._mouse_[1]-27;				
+				input_.x_=input_.x;
+				input_.y_=input_.y;
 				input_.style.left = input_.x_+'px';
 				input_.style.top = input_.y_+'px';							
 				input_.onkeydown = function handleEnter(e) {
@@ -468,11 +477,12 @@ var Tela = function(a) {
 						document.getElementById('div1').removeChild(this);
 						tela_.show();
 					}
-				};			
+				};		
+				input_.mouse_in=false;
+				input_.addEventListener("mouseenter", function() {this.mouse_in=true;});
+				input_.addEventListener("mouseout", function() {this.mouse_in=false;});
 				document.getElementById('div1').appendChild(input_);
 				input_.focus();			
-
-				
 			}
 		}
 	}
@@ -498,16 +508,89 @@ var Tela = function(a) {
 		
 	}
 
+	// double click
 	this.dblclick = function(e){
 		var px = (e.pageX-8)*(100/this._zoom)+8;
 		var py = (e.pageY-8)*(100/this._zoom)+8;
 		
 		for (var b = 0; b < this._nodes.length ; b++) {						
 			if ( this._nodes[b] == null ) continue;
-			// clickando na emgrenagem
-			if ( this._nodes[b].inside(px-8,py-8) && this._nodes[b].insideEngrenagem(px-8,py-8) ){				
-				this._nodes[b].setEstadoCor('RUNNING');
-				this.show();
+			if ( document.getElementById('elemento_temporario') != null && !document.getElementById('elemento_temporario').mouse_in ){
+				document.getElementById('elemento_temporario').remove();
+				return;
+			}
+			// dentro do node
+			if ( this._nodes[b].inside(px-8,py-8) )
+			{
+				// dentro da engrenagem
+				if ( this._nodes[b].insideEngrenagem(px-8,py-8) ){				
+					this._nodes[b].setEstadoCor('RUNNING');
+					this.show();
+					return;
+				}else{
+					// abrindo a exibicao dos campos 1,2 e 3
+					if ( document.getElementById('elemento_temporario') == null )
+					{
+						tela_.tmp_node=this._nodes[b];
+						setTimeout(function() { 
+							var input_ = document.createElement('DIV');
+							input_.id = 'elemento_temporario';						
+							input_.style.position = 'fixed';
+							//console.log(this._nodes[b].getx());
+							input_.x=tela_.tmp_node.getx()+11;
+							input_.y=tela_.tmp_node.gety()+tela_.tmp_node._height+16;
+							input_.x_=input_.x;
+							input_.y_=input_.y;
+							input_.style.left = input_.x_+'px';
+							input_.style.top = input_.y_+'px';	
+							/*
+							input_.onkeydown = function handleEnter(e) {
+								var keyCode = e.keyCode;
+								if (e.keyCode === 13) {						
+									var txt = this.value.trim();
+									if ( txt.length > 20 )
+										txt = txt.substring(1, 20);
+									if ( txt != "" ){							
+										//tela_.addNode({x:this.x,y:this.y,name:txt,campo1:'oracle'});
+									}
+									document.getElementById('div1').removeChild(this);
+									tela_.show();
+								}
+							};
+							*/							
+							input_.mouse_in=false;
+							input_.addEventListener("mouseenter", function() {this.mouse_in=true;});
+							input_.addEventListener("mouseleave", function() {this.mouse_in=false;});
+							
+							document.getElementById('div1').appendChild(input_);
+							//input_.focus();		
+							input_.innerHTML='<table id="tablebase" class="bordered" style="font-family:Verdana,sans-serif;font-size:10px;border-spacing: 0; " bgcolor="' 
+								+ tela_.global["cor_bg_tab_config"] 
+								+ '"><tr><td><input id="elemento_temporario_campo1" style="width: 118px;"></input></td></tr><tr><td><textarea id="elemento_temporario_campo2" cols="14"></textarea></td></tr><tr><td><textarea id="elemento_temporario_campo3" cols="14"></textarea></td></tr></table>';
+							document.getElementById('elemento_temporario_campo1').value=(tela_.tmp_node!=null&&tela_.tmp_node._campo1!=null)?tela_.tmp_node._campo1:'';
+							document.getElementById('elemento_temporario_campo1').onkeyup = function handleEnter(e) {
+								if ( tela_.tmp_node == null ) return;
+								tela_.tmp_node._campo1=this.value.trim();
+							};
+							document.getElementById('elemento_temporario_campo2').value=(tela_.tmp_node!=null&&tela_.tmp_node._campo2!=null)?tela_.tmp_node._campo2.trim():'';
+							document.getElementById('elemento_temporario_campo2').onkeyup = function handleEnter(e) {
+								if ( tela_.tmp_node == null ) return;
+								tela_.tmp_node._campo2=this.value.trim();
+							};
+							document.getElementById('elemento_temporario_campo3').value=(tela_.tmp_node!=null&&tela_.tmp_node._campo3!=null)?tela_.tmp_node._campo3.trim():'';
+							document.getElementById('elemento_temporario_campo3').onkeyup = function handleEnter(e) {
+								if ( tela_.tmp_node == null ) return;
+								tela_.tmp_node._campo3=this.value.trim();
+							};	
+							document.getElementById('elemento_temporario_campo2').focus();
+						}, 0);
+				
+						
+					}else{ // fechando a exibição
+						document.getElementById('elemento_temporario').remove();
+						tela_.tmp_node=null;
+					}
+				}
 			}
 		}
 		
