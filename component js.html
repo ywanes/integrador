@@ -489,6 +489,7 @@ var Tela = function(a) {
 			// clickando na emgrenagem
 			if ( this._nodes[b].inside(px-8,py-8) && this._nodes[b].insideEngrenagem(px-8,py-8) ){				
 				this._nodes[b].setEstadoCor('RUNNING');
+				this.show();
 			}
 		}
 		
