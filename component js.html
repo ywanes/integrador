@@ -153,7 +153,7 @@ var Tela = function(a) {
 	this._candidato_ligacao = null;
 	this._mouse = [];
 	this._mouse_ = [];
-	this._text = "";
+	this._name = "";
 	
 	this._eixox = 0;
 	this._eixoy = 0;
@@ -258,6 +258,23 @@ var Tela = function(a) {
 		}		
 		console.log('Ocorreu um erro ao pegar um novo numero de UniqId, não existe mais numeros disponiveis.');
 		return null;
+	}
+	
+	this.importa = function(lista)
+	{
+		/*modelo
+			importa([{ name:'teste',antecessorName:'',campo1:'oracle',campo2:`
+				...
+			`,campo3:null,tiponode:'Node', x:300, y:300, uniqId:null,estado_cor:null,antecessorUniqId:null }]);		
+		*/
+		for (var b = 0; b < lista.length ; b++)
+			this.addNode(lista[b]);
+	}
+	
+	this.exporta = function()
+	{
+		for (var b = 0; b < this._nodes.length ; b++)
+			console.log(this._nodes[b].showInfoExporta());
 	}
 	
 	// rotinas externas
@@ -446,7 +463,7 @@ var Tela = function(a) {
 						if ( txt.length > 20 )
 							txt = txt.substring(1, 20);
 						if ( txt != "" ){							
-							tela_.addNode(this.x,this.y,txt);													
+							tela_.addNode({x:this.x,y:this.y,name:txt,campo1:'oracle'});
 						}
 						document.getElementById('div1').removeChild(this);
 						tela_.show();
@@ -584,35 +601,57 @@ var Tela = function(a) {
 	
 	this.showInfoEixo = function(){
 		console.log('');
-		console.log('Eixo:'+this._eixox+' '+this._eixoy);	
-	
+		console.log('Eixo:'+this._eixox+' '+this._eixoy);		
 	}
 
 	this.showInfoZoom = function(){
 		console.log('');
-		console.log('Zoom:'+this._zoom+'%');	
-	
-	}
-	
-	
-	this.addNode = function(a,b,c,d,e,f,g,h){ // x y text uniqId campo1 campo2 campo3 Estado_Cor
-		var c_ = c.trim();
-		switch(c_.toUpperCase()) {
-			case "INICIO":
-				this._nodes.push(new NodeInicio({ x:a, y:b, name:c_,uniqId:d,campo1:e,campo2:f,campo3:g,estado_cor:h }));		
-				break;
-			case "FIM":
-				this._nodes.push(new NodeFim({ x:a, y:b, name:c_,uniqId:d,campo1:e,campo2:f,campo3:g,estado_cor:h }));		
-				break;
-			case "JUNCAO":
-				this._nodes.push(new NodeJuncao({ x:a, y:b, name:c_,uniqId:d,campo1:e,campo2:f,campo3:g,estado_cor:h }));		
-				break;
-			default:
-				this._nodes.push(new Node({ x:a, y:b, name:c_,uniqId:d,campo1:e,campo2:f,campo3:g,estado_cor:h }));		
-		}
-		
+		console.log('Zoom:'+this._zoom+'%');		
 	}
 
+	this.addNode = function(a){
+		// localizando node existente por _uniq_id
+		if ( a.uniqId != null ){
+			for ( var i=0;i<tela_._nodes.length;i++ ){
+				if ( tela_._nodes[i]._uniq_id == a.uniqId ){
+					tela_._nodes[i].setNode(a);
+					return;
+				}
+			}
+		}
+		// localizando node existente por _name
+		if ( a.name != null ){
+			for ( var i=0;i<tela_._nodes.length;i++ ){
+				if ( tela_._nodes[i]._name != null && tela_._nodes[i]._name == a.name ){
+					tela_._nodes[i].setNode(a);
+					return;
+				}
+			}
+		}
+		
+		if ( a.tiponode == null )
+			a.tiponode='Node';
+		if ( a.name == null )
+			a.name='sem_nome';
+		if ( a.name.toUpperCase() == 'INICIO'){
+			a.tiponode='NodeInicio';
+			this._nodes.push(new NodeInicio(a));								
+			return;
+		}
+		if ( a.name.toUpperCase() == 'FIM'){
+			a.tiponode='NodeFim';
+			this._nodes.push(new NodeFim(a));								
+			return;
+		}
+		if ( a.name.toUpperCase() == 'JUNCAO'){
+			a.tiponode='NodeJuncao';
+			this._nodes.push(new NodeJuncao(a));								
+			return;
+		}
+		a.tiponode='Node';
+		this._nodes.push(new Node(a));								
+	}
+	
 	this.addLigacao = function(a,b,c,d){
 		this._ligacoes.push([a,b,c,d]);
 	}
@@ -790,12 +829,76 @@ var Fundo = function() {
 };
 
 var Node = function(a) {	
-	this._text = a.name;
-	this._uniq_id = this.uniqId==null?tela_.getUniqId():this.uniqId;
-	this._campo1 = a.campo1;
-	this._campo2 = a.campo2;
-	this._campo3 = a.campo3;
-	this._estado_cor = a.estado_cor;
+	var x = 0;
+	var y = 0;
+	this.getx = function() {
+		return x+tela_._eixox;
+	}
+	this.gety = function() {
+		return y+tela_._eixoy;
+	}
+	this.setx=  function(a){
+		x=a-tela_._eixox;
+	}
+	this.sety = function(a){
+		y=a-tela_._eixoy;
+	}
+
+	this.setNode = function(a){
+		this._name = a.name;
+		this._uniq_id = this.uniqId==null?tela_.getUniqId():this.uniqId;
+		this._campo1 = a.campo1;
+		this._campo2 = a.campo2;
+		this._campo3 = a.campo3;
+		this._estado_cor = a.estado_cor;
+		if ( a.x == null ) a.x=300;
+		if ( a.y == null ) a.y=300;
+		this.setx(a.x);
+		this.sety(a.y);	
+	}
+	this.setNode(a);	
+	
+	this.showInfoExporta = function()
+	{
+		var tmp_retorno=JSON.stringify({ 
+										name:this._name
+										,antecessorName:'?'										
+										,campo1:"[[TAG1]]"
+										,campo2:"[[TAG2]]"
+										,campo3:"[[TAG3]]"
+										,tiponode:(
+											(this instanceof NodeInicio)?
+											'NodeInicio':
+											(
+												(this instanceof NodeFim)?
+												'NodeFim':
+												(
+													(this instanceof NodeJuncao)?
+													'NodeJuncao':
+													'Node'
+												)												
+											)
+										)
+										,x:this.getx()
+										,y:this.gety()
+										,uniqId:this._uniqId
+										,estado_cor:this._estado_cor
+										,antecessorUniqId:'?' 
+		});
+		var tmp_tag1=null;
+		var tmp_tag2='`\n`';
+		var tmp_tag3=null;
+		if ( this._campo1 != null )
+			tmp_tag1 = "'"+this._campo1+"'";
+		if ( this._campo2 != null && this._campo2.trim() != '' )
+			tmp_tag2 = '`\n'+this._campo2+'\n`';
+		if ( this._campo3 != null )
+			tmp_tag3 = "'"+this._campo3+"'";
+		tmp_retorno=tmp_retorno.replace(/"\[\[TAG1\]\]"/g,tmp_tag1);
+		tmp_retorno=tmp_retorno.replace(/"\[\[TAG2\]\]"/g,tmp_tag2);
+		tmp_retorno=tmp_retorno.replace(/"\[\[TAG3\]\]"/g,tmp_tag3);
+		return '\ntela_.importa(['+tmp_retorno+'])';
+	}
 	
 	this._linha = 10;	
 	this._fresta = 10;
@@ -836,23 +939,9 @@ var Node = function(a) {
 	this._campoVisaoSlot = 10;
 	this._recuoEngate = -20;
 	
-	var x = 0;
-	var y = 0;
-	this.getx = function() {
-		return x+tela_._eixox;
-	}
-	this.gety = function() {
-		return y+tela_._eixoy;
-	}
-	this.setx=  function(a){
-		x=a-tela_._eixox;
-	}
-	this.sety = function(a){
-		y=a-tela_._eixoy;
-	}
 	this.showInfoNode = function() {
 		console.log('');
-		console.log('Text:'+this._text);		
+		console.log('Name:'+this._name);		
 		console.log('UniqId:'+this._uniq_id);		
 		console.log('Campo1:'+this._campo1);		
 		console.log('Campo2:'+this._campo2);
@@ -863,10 +952,6 @@ var Node = function(a) {
 	this.setEstadoCor = function(cor){
 		this._estado_cor=cor;	
 	}
-	
-	this.setx(a.x);
-	this.sety(a.y);	
-
 	
 	this.printa4pontos = function(x1, y1, x2, y2, x3, y3, x4, y4, cor){
 		context.beginPath();			
@@ -1094,7 +1179,7 @@ var Node = function(a) {
 		this.printa(x,y,x+width, y+height,cor3);
 		
 		// preenchendo nome objeto
-		this.printatexto(x,y,this._text,cor_fonte_txt,fonte_txt,px_fonte_txt);
+		this.printatexto(x,y,this._name,cor_fonte_txt,fonte_txt,px_fonte_txt);
 		
 		this.printaslots();
 		this.printaclose();
@@ -1144,7 +1229,7 @@ function NodeInicio(a){
 	Node.call(this,a);
 	this._height = 45;
 	this._width = 120;
-	this._text = a.name;
+	this._name = a.name;
 	this._n_slots_esq=0;
 	this._n_slots_dir=1;
 	this._cor_slot="#fff";
@@ -1157,7 +1242,7 @@ function NodeFim(a){
 	Node.call(this,a);
 	this._height = 45;
 	this._width = 120;
-	this._text = a.name;
+	this._name = a.name;
 	this._n_slots_esq=1;
 	this._n_slots_dir=0;
 	this._cor_slot="#fff";
@@ -1170,7 +1255,7 @@ function NodeJuncao(a){
 	Node.call(this,a);
 	this._height = 35;
 	this._width = 60;
-	//this._text = a.name;
+	this._name = a.name; // nao remover essa linha!! Mesmo que nao mostre o nome não deve-se remover essa linha
 	this._n_slots_esq=1;
 	this._n_slots_dir=1;
 	//this._cor_slot="#fff";
@@ -1227,20 +1312,23 @@ function NodeJuncao(a){
 }
 NodeJuncao.prototype = Object.create(Node.prototype);
 
-
-
 window.onload = function(){
 	var tela = new Tela({width: 1420, height: 790, name: "Component JS " });				
-	tela.addNode(100, 100, "dsadasdasdasd");
-	tela.addNode(650, 350, "AAA");	
-	tela.addNode(950, 200, "ffdsf");		
-	tela.addNode(950, 530, "fwfds",333,"teste 1","teste 2","teste 3","ERROR");
+	tela_.importa([{ name:'dsadasdasdasd',antecessorName:'',campo1:'oracle',campo2:`
+	`,campo3:null,tiponode:'Node', x:100, y:100, uniqId:null,estado_cor:null,antecessorUniqId:null }]);
+	tela_.importa([{ name:'AAA',antecessorName:'',campo1:'oracle',campo2:`
+	`,campo3:null,tiponode:'Node', x:650, y:350, uniqId:null,estado_cor:null,antecessorUniqId:null }]);
+	tela_.importa([{ name:'ffdsf',antecessorName:'',campo1:'oracle',campo2:`
+	`,campo3:null,tiponode:'Node', x:950, y:200, uniqId:null,estado_cor:null,antecessorUniqId:null }]);
+	tela_.importa([{ name:'fwfds',antecessorName:'',campo1:'oracle',campo2:`
+		teste 2
+	`,campo3:'teste 3',tiponode:'Node', x:950, y:530, uniqId:333,estado_cor:'ERROR',antecessorUniqId:null }]);
+	
 	tela.addLigacao(0,0,1,0);
 	//tela.addLigacao(0,0,1,1);
 	tela.addLigacao(1,0,2,0);
 	tela.addLigacao(1,0,3,0);
 	tela.show();
-	
 }
 
 </script>    
