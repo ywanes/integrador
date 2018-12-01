@@ -136,8 +136,8 @@ var Tela = function(a) {
     //this._width = a.width;
 	//this._height = a.height;
 	
-	this._width = screen.width*.98;		
-	this._height = screen.height*.85;    
+	this._width = screen.width*.98-50;		
+	this._height = screen.height*.85-50;    
 	
 	this._name = a.name;
 	
@@ -228,6 +228,35 @@ var Tela = function(a) {
 		context3.globalAlpha = this.global["range_transparency3"]/100;
 	};
 
+	// utils
+	this.getUniqId = function(){
+		var tmp_max_random=100000;
+		var tmp_max_tentativas=tmp_max_random;
+		var tmp_random = Math.floor(Math.random() * tmp_max_random);
+		var tmp_random_achou=false;
+		while (tmp_max_tentativas-->0)
+		{
+			tmp_random_achou=false;
+			for (var b = 0; b < this._nodes.length ; b++) {						
+				if ( this._nodes[b] == null ) continue;
+				if ( this._nodes[b]._uniq_id == tmp_random ){				
+					tmp_random_achou=true;
+					break;
+				}
+			}
+			if ( tmp_random_achou || tmp_random == 0)
+			{
+				tmp_random++;
+				if ( tmp_random >= tmp_max_random )
+					tmp_random=1;
+			}else{
+				return tmp_random;
+			}			
+		}		
+		console.log('Ocorreu um erro ao pegar um novo numero de UniqId, não existe mais numeros disponiveis.');
+		return null;
+	}
+	
 	// rotinas externas
     this.mousedown_ =  function(e) { tela_.mousedown(e);  };
     this.mousemove_ =  function(e) { tela_.mousemove(e);  };
@@ -273,6 +302,7 @@ var Tela = function(a) {
 							{
 								this._flying = [b,slot[0],px-8,py-8];
 							}else{
+								this._nodes[b].showInfoNode();
 								this._nodes[b]._relx = px - this._nodes[b].getx();
 								this._nodes[b]._rely = py - this._nodes[b].gety();
 								this._element = this._nodes[b];
@@ -381,7 +411,8 @@ var Tela = function(a) {
 			this._eixoy = py - this._rely;
 			this._relx = 0;
 			this._rely = 0;
-			this._movendo_eixo = false;
+			this._movendo_eixo = false;		
+			this.showInfoEixo();
 		}
 	}
 
@@ -452,9 +483,9 @@ var Tela = function(a) {
 		
 		for (var b = 0; b < this._nodes.length ; b++) {						
 			if ( this._nodes[b] == null ) continue;
-			// clickando no node
-			if ( this._nodes[b].inside(px-8,py-8) ){
-				//alert('Componente ' + this._nodes[b]._text );
+			// clickando na emgrenagem
+			if ( this._nodes[b].inside(px-8,py-8) && this._nodes[b].insideEngrenagem(px-8,py-8) ){
+				alert('run ' + this._nodes[b]._text );
 			}
 		}
 		
@@ -483,7 +514,8 @@ var Tela = function(a) {
 				- (100/antes)*this._height*((100-antes)/100)
 			)*((pageY)/this._height);		
 		
-		this.show();		
+		this.show();	
+		this.showInfoZoom();
 	}
 	
 	this.showfio = function(p1,p2,recuo){
@@ -545,23 +577,33 @@ var Tela = function(a) {
 		return false;
 	}
 	
-	this.addNode = function(a,b,c){		
+	this.showInfoEixo = function(){
+		console.log('');
+		console.log('Eixo:'+this._eixox+' '+this._eixoy);	
+	
+	}
+
+	this.showInfoZoom = function(){
+		console.log('');
+		console.log('Zoom:'+this._zoom+'%');	
+	
+	}
+	
+	
+	this.addNode = function(a,b,c,d,e,f){ // x y text uniqId campo1 campo2
 		var c_ = c.trim();
 		switch(c_.toUpperCase()) {
 			case "INICIO":
-				this._nodes.push(new NodeInicio({ x:a, y:b, name:c_ }));		
+				this._nodes.push(new NodeInicio({ x:a, y:b, name:c_,uniqId:d,campo1:e,campo2:f }));		
 				break;
 			case "FIM":
-				this._nodes.push(new NodeFim({ x:a, y:b, name:c_ }));		
+				this._nodes.push(new NodeFim({ x:a, y:b, name:c_,uniqId:d,campo1:e,campo2:f }));		
 				break;
 			case "JUNCAO":
-				this._nodes.push(new NodeJuncao({ x:a, y:b, name:c_ }));		
-				break;
-			case "J":
-				this._nodes.push(new NodeJuncao({ x:a, y:b, name:c_ }));		
+				this._nodes.push(new NodeJuncao({ x:a, y:b, name:c_,uniqId:d,campo1:e,campo2:f }));		
 				break;
 			default:
-				this._nodes.push(new Node({ x:a, y:b, name:c_ }));		
+				this._nodes.push(new Node({ x:a, y:b, name:c_,uniqId:d,campo1:e,campo2:f }));		
 		}
 		
 	}
@@ -740,15 +782,17 @@ var Fundo = function() {
 	
 };
 
-
 var Node = function(a) {	
+	this._text = a.name;
+	this._uniq_id = this.uniqId==null?tela_.getUniqId():this.uniqId;
+	this._campo1 = a.campo1;
+	this._campo2 = a.campo2;
+	
 	this._linha = 10;	
 	this._fresta = 10;
 	
 	this._width = 150;
-	this._height = 70;	
-	
-	this._text = a.name;
+	this._height = 70;			
 	
 	this._relx = 0;
 	this._rely = 0;
@@ -795,6 +839,14 @@ var Node = function(a) {
 	this.sety = function(a){
 		y=a-tela_._eixoy;
 	}
+	this.showInfoNode = function() {
+		console.log('');
+		console.log('Text:'+this._text);		
+		console.log('UniqId:'+this._uniq_id);		
+		console.log('Campo1:'+this._campo1);		
+		console.log('Campo2:'+this._campo2);		
+	}
+	
 	this.setx(a.x);
 	this.sety(a.y);	
 
@@ -850,6 +902,13 @@ var Node = function(a) {
 		if ( this._height < 40 )
 			return [this.getx()+this._width*.9-4,this.gety()+this._height*.07-8];
 		return [this.getx()+this._width*.9+5,this.gety()+this._height*.07+5];
+	}
+
+	this.getPointEngrenagem = function(){
+		if ( this._height < 40 )
+			return [-99999999,-99999999];
+		var tmp_engrenagem=this.getPointClose();
+		return [tmp_engrenagem[0]-125,tmp_engrenagem[1]];
 	}
 	
 	this.getnumligacaobyslot = function(numseq,isSender,requestid){
@@ -947,7 +1006,7 @@ var Node = function(a) {
 	}
 
 	this.printaclose = function(){
-		var p = this.getPointClose();
+		var p = this.getPointClose();		
 		var emcima = tela_._mouseSobreClose != null && tela_._mouseSobreClose == this.getidnode();
 		if ( this._height >= 40 || emcima){
 			this.printa4pontos(p[0]-2,p[1]-1,p[0]-1,p[1]-2,p[0]+4,p[1]+3,p[0]+3,p[1]+4,this._cor3);
@@ -1046,6 +1105,17 @@ var Node = function(a) {
 		}
 		return false;
 	}
+
+	this.insideEngrenagem = function(x_,y_){
+		var p = this.getPointEngrenagem();
+		if ( x_ >= p[0]-this._campoVisaoSlot && x_ <= p[0]+this._campoVisaoSlot && y_ >= p[1]-this._campoVisaoSlot && y_ <= p[1]+this._campoVisaoSlot ){							
+			return true;
+		}
+		return false;
+	}
+	
+	
+	
 };
 
 function NodeInicio(a){
@@ -1142,7 +1212,7 @@ window.onload = function(){
 	tela.addNode(100, 100, "dsadasdasdasd");
 	tela.addNode(650, 350, "AAA");	
 	tela.addNode(950, 200, "ffdsf");		
-	tela.addNode(950, 530, "fwfds")
+	tela.addNode(950, 530, "fwfds",333,"teste 1","teste 2");
 	tela.addLigacao(0,0,1,0);
 	//tela.addLigacao(0,0,1,1);
 	tela.addLigacao(1,0,2,0);
