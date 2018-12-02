@@ -147,7 +147,7 @@ var Tela = function(a) {
 	
 	this._fundos = [];
 	this._nodes = [];
-	this._ligacoes = []; // [[origem,numseq,destino,numseq]]
+	this.ligacoes = []; // [[origem,numseq,destino,numseq]]
 	
 	this._flying = null; // 	[id,numseq,x,y]
 	this._p2_correcao_flying = null;
@@ -214,7 +214,7 @@ var Tela = function(a) {
 			if ( this._nodes[i] == null ) continue;
 			this._nodes[i].show();
 		}
-		for (var i = 0; i < this._ligacoes.length; i++) this.showligacao(this._ligacoes[i]);		
+		for (var i = 0; i < this.lenLigacoes(); i++) this.showligacao(this.getLigacao(i));		
 		
 		if ( this._flying != null ){				
 			if ( this._nodes[this._flying[0]] != null )
@@ -322,9 +322,9 @@ var Tela = function(a) {
 						// clickando em um slot ligado
 						if ( slot != null && !slot[1] && this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0) != -1 ){
 							var n_ligacao = this._nodes[b].getnumligacaobyslot(slot[0],slot[1],0);
-							var id=this._ligacoes[n_ligacao][0];
-							this._flying = [this._ligacoes[n_ligacao][0],this._ligacoes[n_ligacao][1],px,py];
-							this._ligacoes.splice(n_ligacao,1);					
+							var id=this.getLigacao(n_ligacao)[0];
+							this._flying = [this.getLigacao(n_ligacao)[0],this.getLigacao(n_ligacao)[1],px,py];
+							this.removeLigacao(n_ligacao);
 							this.show();
 						}else{			
 							// gerando nova linha
@@ -419,15 +419,15 @@ var Tela = function(a) {
 		if ( e.button == this.clickesq ) 
 		{
 			if ( this._candidato_ligacao != null )
-				this._ligacoes.push(this._candidato_ligacao);			
+				this.addLigacao(this._candidato_ligacao);			
 			this._flying = null;
 			if ( this._tryclose != null && this._nodes[this._tryclose] != null ){
 				var b = this._tryclose;
 				if ( this._nodes[b].insideClose(px-8,py-8) ){				
 					this._tryclose = b;
-					for ( var i=this._ligacoes.length-1;i>=0;i-- )
-						if ( this._ligacoes[i][0] == b || this._ligacoes[i][2] == b){
-							this._ligacoes.splice(i,1);
+					for ( var i=this.lenLigacoes()-1;i>=0;i-- )
+						if ( this.getLigacao(i)[0] == b || this.getLigacao(i)[2] == b){
+							this.removeLigacao(i);
 							tela_.fechaCaixaTexto();
 						}
 					this._nodes[b] = null;					
@@ -679,8 +679,8 @@ var Tela = function(a) {
 	}
 	
 	this.existeEssaLigacao = function(n1,n2,n3,n4){		
-		for ( var i=0;i<this._ligacoes.length;i++ )
-			if ( this._ligacoes[i][0] == n1 && this._ligacoes[i][1] == n2 && this._ligacoes[i][2] == n3 && this._ligacoes[i][3] == n4)
+		for ( var i=0;i<this.lenLigacoes();i++ )
+			if ( this.getLigacao(i)[0] == n1 && this.getLigacao(i)[1] == n2 && this.getLigacao(i)[2] == n3 && this.getLigacao(i)[3] == n4)
 				return true;				
 		return false;
 	}
@@ -738,9 +738,60 @@ var Tela = function(a) {
 		this._nodes.push(new Node(a));								
 	}
 	
-	this.addLigacao = function(a,b,c,d){
-		this._ligacoes.push([a,b,c,d]);
+	this.getLigacao = function(a){
+		return this.ligacoes[a];
 	}
+	
+	this.lenLigacoes = function(){
+		return this.ligacoes.length;
+	}
+	
+	this.removeLigacao = function(n){
+		this.ligacoes.splice(n,1);
+	}
+
+	this.fixUnicaNumseqOrigemLigacao = function(a,n){ // [[origem,numseq,destino,numseq]] posicao
+		var tmp_fixed=false;
+		var tmp_ligacao=null;
+		for (var b=0;b<this.lenLigacoes();b++)
+		{
+			if ( b == n ) continue;
+			tmp_ligacao=this.getLigacao(b);
+			if ( tmp_ligacao[2] == a[2] && tmp_ligacao[3] != a[3] ){
+				this.ligacoes[b]=[tmp_ligacao[0],tmp_ligacao[1],tmp_ligacao[2],a[3]];
+				tmp_fixed=true;
+			}
+		}		
+		console.log('');
+		console.log('Correção de unica entrada executada!');
+	}
+	
+	this.removeDuplicidadeLigacao = function(){
+		for (var b=this.lenLigacoes()-1;b>=0;b--)
+		{
+			for (var c=b-1;c>=0;c--)
+			{
+				if ( 
+					this.ligacoes[b][0] == this.ligacoes[c][0]
+					&& this.ligacoes[b][1] == this.ligacoes[c][1]
+					&& this.ligacoes[b][2] == this.ligacoes[c][2]
+					&& this.ligacoes[b][3] == this.ligacoes[c][3]
+				)
+				{
+					this.removeLigacao(b);
+					break;
+				}
+			}		
+		}		
+	}
+	
+	this.addLigacao = function(a){ // [[origem,numseq,destino,numseq]]
+		this.ligacoes.push(a);
+		this.fixUnicaNumseqOrigemLigacao(a,this.lenLigacoes()-1);
+		this.removeDuplicidadeLigacao();
+	}
+
+
 	
 	window.addEventListener("mousedown", 	this.mousedown_	, false);
 	window.addEventListener("mousemove", 	this.mousemove_	, false);
@@ -1102,10 +1153,10 @@ var Node = function(a) {
 	this.getnumligacaobyslot = function(numseq,isSender,requestid){
 		var id=this.getidnode();
 		var tmp_lig = [];
-		for ( var j=0;j<tela_._ligacoes.length;j++ )
+		for ( var j=0;j<tela_.lenLigacoes();j++ )
 		{
-			if ( ( isSender && tela_._ligacoes[j][1] == numseq ) || ( !isSender && tela_._ligacoes[j][3] == numseq ) ) {
-				if ( ( isSender && tela_._ligacoes[j][0] == id ) || ( !isSender && tela_._ligacoes[j][2] == id ) ){
+			if ( ( isSender && tela_.getLigacao(j)[1] == numseq ) || ( !isSender && tela_.getLigacao(j)[3] == numseq ) ) {
+				if ( ( isSender && tela_.getLigacao(j)[0] == id ) || ( !isSender && tela_.getLigacao(j)[2] == id ) ){
 					if ( requestid == 0 )
 						return j;
 					tmp_lig.push(j);
@@ -1410,10 +1461,9 @@ window.onload = function(){
 		teste 2
 	`,campo3:'teste 3',tiponode:'Node', x:950, y:530, uniqId:333,estado_cor:'ERROR',antecessorUniqId:null }]);
 	
-	tela.addLigacao(0,0,1,0);
-	//tela.addLigacao(0,0,1,1);
-	tela.addLigacao(1,0,2,0);
-	tela.addLigacao(1,0,3,0);
+	tela.addLigacao([0,0,1,0]);
+	tela.addLigacao([1,0,2,0]);
+	tela.addLigacao([1,0,3,0]);
 	tela.show();
 }
 
