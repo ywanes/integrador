@@ -295,7 +295,6 @@ var Tela = function(a) {
 	this.mousewheel_ = function(e) { tela_.mousewheel(e); };
 	this.dblclick_   = function(e) { tela_.dblclick(e); };
 	
-	
     this.mousedown = function(e) {		
 		var px = (e.pageX-8)*(100/this._zoom)+8;
 		var py = (e.pageY-8)*(100/this._zoom)+8;
@@ -346,7 +345,7 @@ var Tela = function(a) {
 		
 		if ( e.button == this.clickscroll && tela_._mouse_.length == 2 )	
 		{		
-			this.changezoom(100-this._zoom,tela_._mouse_[0],tela_._mouse_[1]);
+			this.setZoom100();
 			this.show();
 		}
 		
@@ -357,6 +356,11 @@ var Tela = function(a) {
 			this._rely = py - this._eixoy;						
 		}
     };
+
+	this.setZoom100 = function()
+	{
+		this.changezoom(100-this._zoom,tela_._mouse_[0],tela_._mouse_[1]);
+	}
 	
 	this.mousemove = function(e) {				
 		var px = (e.pageX-8)*(100/this._zoom)+8;
@@ -534,33 +538,18 @@ var Tela = function(a) {
 					// abrindo a exibicao dos campos 1,2 e 3
 					if ( document.getElementById('elemento_temporario') == null )
 					{
+						this.setZoom100();
 						tela_.tmp_node=this._nodes[b];
 						setTimeout(function() { 
 							var input_ = document.createElement('DIV');
 							input_.id = 'elemento_temporario';						
 							input_.style.position = 'fixed';
-							//console.log(this._nodes[b].getx());
 							input_.x=tela_.tmp_node.getx()+11;
 							input_.y=tela_.tmp_node.gety()+tela_.tmp_node._height+16;
 							input_.x_=input_.x;
 							input_.y_=input_.y;
 							input_.style.left = input_.x_+'px';
 							input_.style.top = input_.y_+'px';	
-							/*
-							input_.onkeydown = function handleEnter(e) {
-								var keyCode = e.keyCode;
-								if (e.keyCode === 13) {						
-									var txt = this.value.trim();
-									if ( txt.length > 20 )
-										txt = txt.substring(1, 20);
-									if ( txt != "" ){							
-										//tela_.addNode({x:this.x,y:this.y,name:txt,campo1:'oracle'});
-									}
-									document.getElementById('div1').removeChild(this);
-									tela_.show();
-								}
-							};
-							*/							
 							input_.mouse_in=false;
 							input_.addEventListener("mouseenter", function() {this.mouse_in=true;});
 							input_.addEventListener("mouseleave", function() {this.mouse_in=false;});
