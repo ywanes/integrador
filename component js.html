@@ -1444,6 +1444,9 @@ function NodeJuncao(a){
 NodeJuncao.prototype = Object.create(Node.prototype);
 
 function exportar(){
+	if ( document.getElementById('elemento_temporario') != null ) 
+		document.getElementById('elemento_temporario').remove();					
+		
 	var input_ = document.createElement('textarea');
 	input_.id = 'elemento_temporario';
 	input_.rows = '10';
