@@ -279,15 +279,18 @@ var Tela = function(a) {
 				...
 			`,campo3:null,tiponode:'Node', x:300, y:300, uniqId:null,estado_cor:null,antecessorUniqId:null }]);		
 		*/
-		for (var b = 0; b < lista.length ; b++)
+		for (var b = 0; b < lista.length ; b++){
+			lista[b]['modo_import']=true;
 			this.addNode(lista[b]);
+		}
 	}
 	
 	this.exporta = function()
 	{
 		var tmp_result='';
 		for (var b = 0; b < this._nodes.length ; b++)
-			tmp_result+=this._nodes[b].showInfoExporta();
+				if ( this._nodes[b] != null )
+					tmp_result+=this._nodes[b].showInfoExporta();
 		console.log(tmp_result);
 		return tmp_result;
 	}
@@ -457,7 +460,7 @@ var Tela = function(a) {
 		}
 	}
 
-	this.keydown = function(e){				
+	this.keydown = function(e){						
 		// verifica digitação no painel
 		if ( document.getElementById('div2') != null && document.getElementById('div2').firstElementChild != null && document.getElementById('div2').firstElementChild === document.activeElement ){
 			return;
@@ -466,15 +469,22 @@ var Tela = function(a) {
 		// keycode permitidos
 		if ( e.keyCode == 32 || ( e.keyCode >= 48 && e.keyCode <= 90 ) ){						
 			// verifica presença de coordenada
-			if (document.getElementById('div1').childElementCount == 0 && this._mouse[0] != null ){				
+			if (document.getElementById('div1').childElementCount == 0 && this._mouse[0] != null ){								
 				var input_ = document.createElement('input');
 				input_.type = 'text';
 				input_.id = 'elemento_temporario';
 				input_.style.position = 'fixed';
-				input_.x=this._mouse[0]-85;
-				input_.y=this._mouse[1]-27;				
-				input_.x_=input_.x;
-				input_.y_=input_.y;
+				if ( this._zoom == 100 ){
+					input_.x=this._mouse[0]-85;
+					input_.y=this._mouse[1]-27;								
+					input_.x_=input_.x;
+					input_.y_=input_.y;
+				}else{
+					input_.x=this._mouse[0]-85;
+					input_.y=this._mouse[1]-27;								
+					input_.x_=10;
+					input_.y_=10;					
+				}
 				input_.style.left = input_.x_+'px';
 				input_.style.top = input_.y_+'px';							
 				input_.onkeydown = function handleEnter(e) {
@@ -968,6 +978,12 @@ var Node = function(a) {
 	this.gety = function() {
 		return y+tela_._eixoy;
 	}
+	this.get_ab_x = function() {
+		return x;
+	}
+	this.get_ab_y = function() {
+		return y;
+	}
 	this.setx=  function(a){
 		x=a-tela_._eixox;
 	}
@@ -977,15 +993,20 @@ var Node = function(a) {
 
 	this.setNode = function(a){
 		this._name = a.name;
-		this._uniq_id = this.uniqId==null?tela_.getUniqId():this.uniqId;
+		this._uniq_id = a.uniqId==null?tela_.getUniqId():a.uniqId;
 		this._campo1 = a.campo1;
 		this._campo2 = a.campo2;
 		this._campo3 = a.campo3;
 		this._estado_cor = a.estado_cor;
 		if ( a.x == null ) a.x=300;
 		if ( a.y == null ) a.y=300;
-		this.setx(a.x);
-		this.sety(a.y);	
+		if ( a.modo_import != null && a.modo_import ){
+			x=a.x;
+			y=a.y;
+		}else{
+			this.setx(a.x);
+			this.sety(a.y);	
+		}
 	}
 	this.setNode(a);	
 	
@@ -1010,9 +1031,9 @@ var Node = function(a) {
 												)												
 											)
 										)
-										,x:this.getx()
-										,y:this.gety()
-										,uniqId:this._uniqId
+										,x:this.get_ab_x()
+										,y:this.get_ab_y()
+										,uniqId:this._uniq_id
 										,estado_cor:this._estado_cor
 										,antecessorUniqId:'?' 
 		});
@@ -1078,6 +1099,8 @@ var Node = function(a) {
 		console.log('Campo2:'+this._campo2);
 		console.log('Campo3:'+this._campo3);
 		console.log('Estado Cor:'+this._estado_cor);
+		console.log('X:'+this.get_ab_x());
+		console.log('Y:'+this.get_ab_y());
 	}
 	
 	this.setEstadoCor = function(cor){
