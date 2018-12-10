@@ -970,25 +970,25 @@ var Fundo = function() {
 };
 
 var Node = function(a) {	
-	var x = 0;
-	var y = 0;
+	this._x=0;
+	this._y=0;
 	this.getx = function() {
-		return x+tela_._eixox;
+		return this._x+tela_._eixox;
 	}
 	this.gety = function() {
-		return y+tela_._eixoy;
+		return this._y+tela_._eixoy;
 	}
 	this.get_ab_x = function() {
-		return x;
+		return this._x;
 	}
 	this.get_ab_y = function() {
-		return y;
+		return this._y;
 	}
 	this.setx=  function(a){
-		x=a-tela_._eixox;
+		this._x=a-tela_._eixox;
 	}
 	this.sety = function(a){
-		y=a-tela_._eixoy;
+		this._y=a-tela_._eixoy;
 	}
 
 	this.setNode = function(a){
@@ -1001,8 +1001,8 @@ var Node = function(a) {
 		if ( a.x == null ) a.x=300;
 		if ( a.y == null ) a.y=300;
 		if ( a.modo_import != null && a.modo_import ){
-			x=a.x;
-			y=a.y;
+			this._x=a.x;
+			this._y=a.y;
 		}else{
 			this.setx(a.x);
 			this.sety(a.y);	
