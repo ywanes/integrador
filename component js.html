@@ -703,7 +703,7 @@ var Tela = function(a) {
 		// localizando node existente por _uniq_id
 		if ( a.uniqId != null ){
 			for ( var i=0;i<tela_._nodes.length;i++ ){
-				if ( tela_._nodes[i]._uniq_id == a.uniqId ){
+				if ( tela_._nodes[i] != null && tela_._nodes[i]._uniq_id == a.uniqId ){
 					tela_._nodes[i].setNode(a);
 					return;
 				}
@@ -712,7 +712,7 @@ var Tela = function(a) {
 		// localizando node existente por _name
 		if ( a.name != null ){
 			for ( var i=0;i<tela_._nodes.length;i++ ){
-				if ( tela_._nodes[i]._name != null && tela_._nodes[i]._name == a.name ){
+				if ( tela_._nodes[i] != null && tela_._nodes[i]._name != null && tela_._nodes[i]._name == a.name ){
 					tela_._nodes[i].setNode(a);
 					return;
 				}
