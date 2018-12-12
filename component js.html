@@ -291,6 +291,9 @@ var Tela = function(a) {
 		for (var b = 0; b < this._nodes.length ; b++)
 				if ( this._nodes[b] != null )
 					tmp_result+=this._nodes[b].showInfoExporta();
+		tmp_result+="\n";
+		for (var b = 0; b < this.ligacoes.length ; b++)
+			tmp_result+="\ntela_.addLigacao(["+this.ligacoes[b][0]+","+this.ligacoes[b][1]+","+this.ligacoes[b][2]+","+this.ligacoes[b][3]+"]);";
 		console.log(tmp_result);
 		return tmp_result;
 	}
@@ -765,9 +768,11 @@ var Tela = function(a) {
 				this.ligacoes[b]=[tmp_ligacao[0],tmp_ligacao[1],tmp_ligacao[2],a[3]];
 				tmp_fixed=true;
 			}
-		}		
-		console.log('');
-		console.log('Correção de unica entrada executada!');
+		}	
+		if ( tmp_fixed ){
+			console.log('');
+			console.log('Correção de unica entrada executada!');
+		}
 	}
 	
 	this.removeDuplicidadeLigacao = function(){
@@ -789,12 +794,41 @@ var Tela = function(a) {
 		}		
 	}
 	
+	this.getSeqByUniqId = function(a){ // "uniqId"
+		for ( var b=0;b<this._nodes.length;b++ )
+		{
+			if ( this._nodes[b] == null ) continue;
+			if ( this._nodes[b]._uniq_id == a ) return b;
+		}
+		return -1;
+	}
+	
 	this.addLigacao = function(a){ // [[origem,numseq,destino,numseq]]
 		this.ligacoes.push(a);
 		this.fixUnicaNumseqOrigemLigacao(a,this.lenLigacoes()-1);
 		this.removeDuplicidadeLigacao();
 	}
 
+	this.addLigacaoByUniqId = function(a){ // [["id1,id2",numseq,"id3",numseq]]
+		var origensID=a[0].split(",");
+		var origensSEQ=a[0].split(",");
+		var destino=this.getSeqByUniqId(a[2]);
+		if ( destino == -1 ){
+			console.log("Erro, não foi possível inserir esta ligação, o uniqId "+a[2]+" não foi encontrado!");
+			return;
+		}
+		
+		for ( var b=0;b<origensID.length;b++ ){
+			origensSEQ[b]=this.getSeqByUniqId(origensID[b]);
+			if ( origensSEQ[b] == -1 ){
+				console.log("Erro, não foi possível inserir esta ligação, o uniqId "+origensID[b]+" não foi encontrado!");
+				return;
+			}
+		}
+		
+		for ( var b=0;b<origensID.length;b++ )
+			this.addLigacao([origensSEQ[b],a[1],destino,a[3]]);
+	}
 
 	
 	window.addEventListener("mousedown", 	this.mousedown_	, false);
