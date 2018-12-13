@@ -68,6 +68,8 @@ var Tela = function(a) {
 		this.global["cor_bg_tab_config"]="#ffffff";
 		this.global["cor_running"]="#59d953";
 		this.global["cor_error"]="#df4d50";
+		this.global["cor_finished"]="#fdf22f";
+		this.global["cor_tail"]="#be8f6d";		
 		this.global["range_transparency1"]=40;
 		this.global["range_transparency2"]=40;
 		this.global["range_transparency3"]=40;
@@ -86,6 +88,11 @@ var Tela = function(a) {
 		for ( var i=0;i<keys.length;i++ )
 			_value+=keys[i]+","+tela_.global[keys[i]]+",";
 		document.cookie = cookie_name + "=" + _value + ";" + expires + ";path=/";				
+	}
+	
+	this.runNode = function(a){
+		a.setEstadoCor('RUNNING');
+		a.show();	
 	}
 	
 	this.tryloadconfigpainelbycookie = function(){
@@ -549,8 +556,7 @@ var Tela = function(a) {
 			{
 				// dentro da engrenagem
 				if ( this._nodes[b].insideEngrenagem(px-8,py-8) ){				
-					this._nodes[b].setEstadoCor('RUNNING');
-					this.show();
+					tela_.runNode(this._nodes[b]);
 					return;
 				}else{
 					// abrindo a exibicao dos campos 1,2 e 3
@@ -1107,6 +1113,8 @@ var Node = function(a) {
 		this._cor1=tela_.global["cor_degrade_1"];	
 		this._cor2=tela_.global["cor_degrade_2"];	
 		this._cor3=tela_.global["cor_preenchimento_preto"];	
+		this._cor6=tela_.global["cor_finished"];	
+		this._cor7=tela_.global["cor_tail"];	
 		this._cor8=tela_.global["cor_running"];	
 		this._cor9=tela_.global["cor_error"];	
 		this._cor_fio=tela_.global["cor_fio"];
@@ -1337,6 +1345,10 @@ var Node = function(a) {
 		var cor2=this._cor2;	// cor degrade 2     - cinza
 		var cor3=this._cor3;	// cor preenchimento - preto
 		
+		if ( this._estado_cor == "FINISHED" )
+			cor1=this._cor6;
+		if ( this._estado_cor == "TAIL" )
+			cor1=this._cor7;
 		if ( this._estado_cor == "RUNNING" )
 			cor1=this._cor8;
 		if ( this._estado_cor == "ERROR" )
