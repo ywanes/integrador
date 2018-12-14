@@ -713,7 +713,8 @@ var Tela = function(a) {
 		if ( a.uniqId != null ){
 			for ( var i=0;i<tela_._nodes.length;i++ ){
 				if ( tela_._nodes[i] != null && tela_._nodes[i]._uniq_id == a.uniqId ){
-					tela_._nodes[i].setNode(a);
+					//tela_._nodes[i].setNode(a);
+					alert('Erro, uniqId '+ a.uniqId +' ja existe!');
 					return;
 				}
 			}
@@ -722,7 +723,8 @@ var Tela = function(a) {
 		if ( a.name != null ){
 			for ( var i=0;i<tela_._nodes.length;i++ ){
 				if ( tela_._nodes[i] != null && tela_._nodes[i]._name != null && tela_._nodes[i]._name == a.name ){
-					tela_._nodes[i].setNode(a);
+					//tela_._nodes[i].setNode(a);
+					alert('Erro, name ' + a.name + ' ja existe!');
 					return;
 				}
 			}
