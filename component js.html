@@ -849,24 +849,29 @@ var Tela = function(a) {
 	}
 
 	this.addLigacaoByName = function(a){ // [["name1,name2",numseq,"name3",numseq]]
+		var retorno=this.addLigacaoByName(a);
+		if ( retorno != "OK" )
+			console.log(retorno);
+	}
+	
+	this.addLigacaoByName_ = function(a){ // [["name1,name2",numseq,"name3",numseq]]
 		var origensNAME=a[0].split(",");
 		var origensSEQ=a[0].split(",");
 		var destino=this.getSeqByName(a[2]);
 		if ( destino == -1 ){
-			console.log("Erro, não foi possível inserir esta ligação, o name "+a[2]+" não foi encontrado!");
-			return;
+			return "Erro, não foi possível inserir esta ligação, o name "+a[2]+" não foi encontrado!";
 		}
 		
 		for ( var b=0;b<origensNAME.length;b++ ){
 			origensSEQ[b]=this.getSeqByName(origensNAME[b]);
 			if ( origensSEQ[b] == -1 ){
-				console.log("Erro, não foi possível inserir esta ligação, o name "+origensNAME[b]+" não foi encontrado!");
-				return;
+				return "Erro, não foi possível inserir esta ligação, o name "+origensNAME[b]+" não foi encontrado!";
 			}
 		}
 		
 		for ( var b=0;b<origensNAME.length;b++ )
 			this.addLigacao([origensSEQ[b],a[1],destino,a[3]]);
+		return "OK";
 	}
 	
 	
