@@ -479,7 +479,7 @@ var Tela = function(a) {
 		// keycode permitidos
 		if ( e.keyCode == 32 || ( e.keyCode >= 48 && e.keyCode <= 90 ) ){						
 			// verifica presença de coordenada
-			if (document.getElementById('div1').childElementCount == 0 && this._mouse[0] != null  && this._mouse[0] >= 0 && this._mouse[1] >= 0 && this._mouse[0] <= this._width && this._mouse[1] <= this._height){											
+			if (document.getElementById('div1').childElementCount == 0 && this._mouse[0] != null  && this._mouse_[0] >= 0 && this._mouse_[1] >= 0 && this._mouse_[0] <= this._width && this._mouse_[1] <= this._height){											
 				var input_ = document.createElement('input');
 				input_.type = 'text';
 				input_.id = 'elemento_temporario';
