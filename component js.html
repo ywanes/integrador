@@ -9,19 +9,19 @@
 	
 	<style>
 	.bordered {
-		border: solid #ccc 3px;
+		border: solid #444 3px;
 		border-radius: 6px;
 	}
 	.bordered tr:hover {
-		background: #fbf8e9;
 	}
 	.bordered td, .bordered th {
-		border-left: 2px solid #ccc;
-		border-top: 2px solid #ccc;
+		border-left: 2px solid #444;
+		border-top: 2px solid #444;
 		padding: 10px;
 	}
 	</style>
-
+	
+	
 	<body bgcolor="#444444">					
 		<div id="elementos_graficos">					
 			<div id="div_new"         style="position: absolute;"  oncontextmenu="return false;" ></div>
@@ -620,6 +620,7 @@ var Tela = function(a) {
 							var input_ = document.createElement('DIV');
 							input_.id = 'elemento_temporario';						
 							input_.style.position = 'fixed';
+							input_.style.backgroundColor = 'rgba(136,136,136,0.33)';							
 							input_.x=tela_.tmp_node.getx()+11;
 							input_.y=tela_.tmp_node.gety()+tela_.tmp_node._height+16;
 							input_.x_=input_.x;
@@ -631,10 +632,8 @@ var Tela = function(a) {
 							input_.addEventListener("mouseleave", function() {this.mouse_in=false;});
 							
 							document.getElementById('div1').appendChild(input_);
-							//input_.focus();		
 							input_.innerHTML='<table id="tablebase" class="bordered" style="font-family:Verdana,sans-serif;font-size:10px;border-spacing: 0; " bgcolor="' 
-								+ tela_.global["cor_bg_tab_config"] 
-								+ '"><tr><td><input id="elemento_temporario_campo1" style="width: 118px;"></input></td></tr><tr><td><textarea id="elemento_temporario_campo2" cols="14"></textarea></td></tr><tr><td><textarea id="elemento_temporario_campo3" cols="14"></textarea></td></tr></table>';
+								+ '"><tr><td><input id="elemento_temporario_campo1" style="width: 118px;background-color: rgba(0,0,0,0);"></input></td></tr><tr><td><textarea id="elemento_temporario_campo2" cols="14" style="background-color: rgba(0,0,0,0);"></textarea></td></tr><tr><td><textarea id="elemento_temporario_campo3" cols="14" style="background-color: rgba(0,0,0,0);"></textarea></td></tr></table>';
 							document.getElementById('elemento_temporario_campo1').value=(tela_.tmp_node!=null&&tela_.tmp_node._campo1!=null)?tela_.tmp_node._campo1:'';
 							document.getElementById('elemento_temporario_campo1').onkeyup = function handleEnter(e) {
 								if ( tela_.tmp_node == null ) return;
